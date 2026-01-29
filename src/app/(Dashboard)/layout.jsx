@@ -1,5 +1,6 @@
 import Navbar from "@/components/shared/Navbar";
 import Sidebar from "@/components/shared/Sidebar";
+import { ClientProvider } from "@/context/clientContext";
 
 export default function DashboardLayout({ children }) {
   return (
@@ -22,7 +23,9 @@ export default function DashboardLayout({ children }) {
         <main className="flex-1 p-4 overflow-y-auto bg-gray-100 dark:bg-gray-900">
           {/* Card-like container */}
           <div className="bg-blue-100/50 rounded-xl shadow-lg p-6 min-h-full">
+          <ClientProvider>
             {children}
+          </ClientProvider>
           </div>
         </main>
 

@@ -24,7 +24,7 @@ const Sidebar = () => {
 
   const MenuItem = ({ icon: Icon, label, active }) => (
     <a
-      href="#"
+      href="/dashboard/clients"
       className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition
         ${
           active
