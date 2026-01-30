@@ -111,7 +111,7 @@ const OperationProcessForm = () => {
                         </FieldWrapper>
                         
                         <FieldWrapper label="Select Accessorues 2" required>
-                            <Input placeholder="Type here (credit/ Cash/ Cheque/ Transfer)" />
+                            <Input placeholder="Type here" />
                         </FieldWrapper>
                     </div>
 
@@ -121,8 +121,20 @@ const OperationProcessForm = () => {
                             <Select placeholder="Select" />
                         </FieldWrapper>
                         
-                        <FieldWrapper label="Assign Technician">
-                            <Textarea placeholder="Type here" />
+                        <FieldWrapper label="Assign Technician" required>
+                            <Input placeholder="Type here" />
+                        </FieldWrapper>
+
+                        <FieldWrapper label="Select Device" required>
+                            <Select placeholder="Select" />
+                        </FieldWrapper>
+
+                        <FieldWrapper label="Select Accessorues 1" required>
+                            <Input placeholder="Type here" />
+                        </FieldWrapper>
+                        
+                        <FieldWrapper label="Select Accessorues 3" required>
+                            <Input placeholder="Type here" />
                         </FieldWrapper>
                     </div>
                 </div>
@@ -163,7 +175,7 @@ const OperationProcessForm = () => {
         hover:bg-customBlue/90
       "
                         >
-                            Save & Submit
+                            Save
                         </button>
                     </div>
 

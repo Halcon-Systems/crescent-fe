@@ -1,6 +1,10 @@
 import React from 'react'
+import { Star, StarOff, Sun, RotateCcw, Bell, Settings } from "lucide-react";
 
 const Navbar = () => {
+  const iconClasses =
+    "w-5 h-5 cursor-pointer text-gray-900 transition hover:text-customBlue hover:scale-110";
+
   return (
     <div>
       <nav className="
@@ -13,10 +17,20 @@ const Navbar = () => {
   md:left-64
   md:w-[calc(100%-16rem)]
 ">
-        <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-          {/* Logo replaced with "Organization Setup" */}
+        <div className="flex flex-wrap items-center justify-between px-6 py-4">
+          <div className='flex gap-5'>
+            {/* starting icons */}
+          <div className="flex items-center gap-3">
+            <Settings className={iconClasses} />
+            <Star
+              className={iconClasses}
+            />
+
+          </div>
+          {/* heading "Organization Setup" */}
           <div className="flex items-center">
             <span className="self-center text-xl text-gray-400 text-heading font-medium whitespace-nowrap">Organization Setup</span>
+          </div>
           </div>
 
           <div className="flex items-center md:order-2 w-full md:w-auto">
@@ -33,6 +47,21 @@ const Navbar = () => {
                 <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
               </div>
               <input type="text" id="input-group-1" className="block w-full ps-9 pe-3 py-2.5 bg-gray-100 rounded-xl outline-none text-heading text-sm rounded-base px-2.5 py-2 shadow-xs placeholder:text-body" placeholder="Search" />
+            </div>
+
+            {/* right side icons */}
+            <div className="flex items-center gap-4 ml-5">
+              {/* Light Theme */}
+              <Sun className={iconClasses} />
+
+              {/* Refresh */}
+              <RotateCcw className={iconClasses} />
+
+              {/* Notification */}
+              <Bell className={iconClasses} />
+
+              {/* Custom Icon (change later) */}
+              <Settings className={iconClasses} />
             </div>
 
             {/* Menu button - hidden as per image */}

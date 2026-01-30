@@ -63,7 +63,7 @@ const Sidebar = () => {
           <div className="relative border-y border-gray-200 py-2 mb-4">
             <button
               onClick={() => setOpen(!open)}
-              className="flex items-center w-full gap-3 px-2 py-2 rounded-md hover:bg-gray-100 transition"
+              className="flex items-center w-full gap-3 px-2 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
             >
               {/* Avatar */}
               <div className="w-8 h-8 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
@@ -105,13 +105,13 @@ const Sidebar = () => {
             {/* Dropdown */}
             {open && (
               <div className="absolute left-0 mt-2 w-full bg-white border rounded-md shadow-lg z-50">
-                <a className="block px-4 py-2 text-sm hover:bg-gray-100">
+                <a className="block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer">
                   Profile
                 </a>
-                <a className="block px-4 py-2 text-sm hover:bg-gray-100">
+                <a className="block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer">
                   Settings
                 </a>
-                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer">
                   Logout
                 </button>
               </div>
