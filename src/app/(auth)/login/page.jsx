@@ -65,106 +65,104 @@ const SignInForm = () => {
     };
 
     return (
-        <div className=" min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center p-2">
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl pt-30">
-                <div className="absolute -top-6 left-1/2 w-[90%] -translate-x-1/2">
-                    <div className="rounded-xl flex flex-col justify-center bg-gradient-to-r from-pink-500 to-pink-600 text-center px-6 py-5 shadow-md h-[144px]">
-                        <h1 className="text-[17px] text-xl  text-white mb-1">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-pink-100 flex items-center justify-center p-3 sm:p-4">
+            <div className="relative w-full max-w-sm sm:max-w-md bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl pt-20 sm:pt-24 md:pt-28">
+                <div className="absolute -top-5 sm:-top-6 left-1/2 w-[92%] sm:w-[90%] -translate-x-1/2">
+                    <div className="rounded-lg sm:rounded-xl flex flex-col justify-center bg-gradient-to-r from-[#E93B77] via-[#E12A6D] to-[#DA1F63] text-center px-4 py-3 sm:px-6 sm:py-4 shadow-md h-20 sm:h-24 md:h-28">
+                        <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white mb-0.5 sm:mb-1">
                             Sign In
                         </h1>
-                        <p className="text-[13px] text-sm text-white">
+                        <p className="text-xs sm:text-sm text-white/90">
                             Please enter your authorized credentials
                         </p>
                     </div>
                 </div>
 
-                {/* ⚪ FORM */}
-                <div className="p-8 pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="p-4 sm:p-6 md:p-8 pt-3 sm:pt-4">
+                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
 
-                        {/* Username */}
                         <div>
-                            {/* <label className="block text-pink-700 font-medium mb-2">
-              Username
-            </label> */}
                             <input
                                 type="text"
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
                                 placeholder="Username"
-                                className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 transition ${errors.username
-                                    ? "border-black-500 bg-pink-50"
-                                    : "border-black-200 hover:border-black-300"
+                                className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm rounded-lg sm:rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#E93B77]/30 transition ${errors.username
+                                    ? "border-red-500 bg-red-50"
+                                    : "border-gray-200 hover:border-gray-300"
                                     }`}
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm text-black-600">
+                                <p className="mt-1 text-xs text-red-600">
                                     {errors.username}
                                 </p>
                             )}
                         </div>
 
-                        {/* Password */}
                         <div>
-                            {/* <label className="block text-pink-700 font-medium mb-2">
-              Current password
-            </label> */}
                             <input
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="Current password"
-                                className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 transition ${errors.password
-                                    ? "border-black-500 bg-black-50"
-                                    : "border-black-200 hover:border-black-300"
+                                className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm rounded-lg sm:rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#E93B77]/30 transition ${errors.password
+                                    ? "border-red-500 bg-red-50"
+                                    : "border-gray-200 hover:border-gray-300"
                                     }`}
                             />
                             {errors.password && (
-                                <p className="mt-1 text-sm text-black-600">
+                                <p className="mt-1 text-xs text-red-600">
                                     {errors.password}
                                 </p>
                             )}
                         </div>
 
-                         {/* Remember me  */}
-                        <div className="flex items-center gap-3">
-                            <Toggle
-                                checked={formData.rememberMe}
-                                onChange={(e) =>
-                                    setFormData(prev => ({
-                                        ...prev,
-                                        rememberMe: e.target.checked
-                                    }))
-                                }
-                                
-                                icons={false} // optional (no check / cross icon)
-                            />
-
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="relative inline-block w-10 h-5">
+                                <input
+                                    type="checkbox"
+                                    id="rememberMeToggle"
+                                    checked={formData.rememberMe}
+                                    onChange={(e) =>
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            rememberMe: e.target.checked
+                                        }))
+                                    }
+                                    className="sr-only"
+                                />
+                                <div className={`block w-10 h-5 rounded-full cursor-pointer transition-all duration-200 ${formData.rememberMe 
+                                    ? 'bg-gradient-to-r from-[#E93B77] to-[#DA1F63]' 
+                                    : 'bg-gray-300'
+                                }`}>
+                                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${formData.rememberMe 
+                                        ? 'translate-x-5 left-0.5' 
+                                        : 'translate-x-0 left-0.5'
+                                    }`}></div>
+                                </div>
+                            </div>
+                            
                             <label
-                                htmlFor="rememberMe"
-                                className="text-[14px] text-sm text-gray-700 cursor-pointer select-none"
+                                htmlFor="rememberMeToggle"
+                                className="text-xs sm:text-sm text-gray-700 cursor-pointer select-none"
                             >
                                 Remember me
                             </label>
                         </div>
 
-
-
-                        {/* Button */}
                         <button
                             type="submit"
-                            className="text-[14px] w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white  py-3 rounded-xl hover:from-pink-600 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-pink-300 transition shadow-md"
+                            className="w-full bg-gradient-to-r from-[#E93B77] to-[#DA1F63] text-white text-xs sm:text-sm font-medium py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:from-[#DA1F63] hover:to-[#E93B77] focus:outline-none focus:ring-2 sm:focus:ring-4 focus:ring-[#DC22655C] transition-all duration-300 shadow-sm sm:shadow-md hover:shadow-md sm:hover:shadow-lg"
                         >
                             SIGN IN
                         </button>
 
-                        {/* Signup */}
-                        <div className="text-center pt-4 border-t border-black-100 ">
-                            <p className="text-sm text-black-700 text-[15px]">
+                        <div className="text-center pt-3 sm:pt-4 border-t border-gray-100">
+                            <p className="text-xs sm:text-sm text-gray-600">
                                 Don't have an account?{" "}
-                                <span className=" text-[15px] font-semibold text-pink-600 hover:text-black cursor-pointer">
+                                <span className="font-medium sm:font-semibold text-[#DA1F63] hover:text-[#E93B77] cursor-pointer transition-colors">
                                     Sign Up
                                 </span>
                             </p>
@@ -175,8 +173,6 @@ const SignInForm = () => {
             </div>
         </div>
     );
-
-
 };
 
 export default SignInForm;
