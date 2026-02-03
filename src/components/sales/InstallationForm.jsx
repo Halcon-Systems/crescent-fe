@@ -5,6 +5,7 @@ import Select from "../ui/Select";
 import Input from "../ui/Input";
 import Textarea from "../ui/TextArea";
 import DateInput from "../ui/DateInput";
+import ConfidentialForm from "./ConfidentialForm";
 
 const TABS = {
     CLIENT: "client",
@@ -14,6 +15,7 @@ const TABS = {
 
 const InstallationForm = () => {
     const [activeTab, setActiveTab] = useState(TABS.CLIENT);
+    const [confidentialForm, setConfidentialForm] = useState(false)
 
     const tabButtonClasses = (isActive) =>
         `
@@ -36,31 +38,35 @@ const InstallationForm = () => {
     return (
         <div className="flex-1 flex flex-col gap-6">
             {/* Tabs */}
-            <div className="flex flex-wrap gap-3">
-                <button
-                    className={tabButtonClasses(activeTab === TABS.CLIENT)}
-                    onClick={() => setActiveTab(TABS.CLIENT)}
-                >
-                    Client Details
-                </button>
+            {
+                !confidentialForm && (
+                    <div className="flex flex-wrap gap-3">
+                        <button
+                            className={tabButtonClasses(activeTab === TABS.CLIENT)}
+                            onClick={() => setActiveTab(TABS.CLIENT)}
+                        >
+                            Client Details
+                        </button>
 
-                <button
-                    className={tabButtonClasses(activeTab === TABS.PRODUCT)}
-                    onClick={() => setActiveTab(TABS.PRODUCT)}
-                >
-                    Product & Package Details
-                </button>
+                        <button
+                            className={tabButtonClasses(activeTab === TABS.PRODUCT)}
+                            onClick={() => setActiveTab(TABS.PRODUCT)}
+                        >
+                            Product & Package Details
+                        </button>
 
-                <button
-                    className={tabButtonClasses(activeTab === TABS.VEHICLE)}
-                    onClick={() => setActiveTab(TABS.VEHICLE)}
-                >
-                    Vehicle & Installation Details
-                </button>
-            </div>
+                        <button
+                            className={tabButtonClasses(activeTab === TABS.VEHICLE)}
+                            onClick={() => setActiveTab(TABS.VEHICLE)}
+                        >
+                            Vehicle & Installation Details
+                        </button>
+                    </div>
+                )
+            }
 
             {/* ================= Client Details Form ================= */}
-            {activeTab === TABS.CLIENT && (
+            {activeTab === TABS.CLIENT && !confidentialForm && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Column 1 */}
@@ -129,7 +135,7 @@ const InstallationForm = () => {
             )}
 
             {/* ================= Product & Package ================= */}
-            {activeTab === TABS.PRODUCT && (
+            {activeTab === TABS.PRODUCT && !confidentialForm && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Column 1 */}
@@ -205,7 +211,7 @@ const InstallationForm = () => {
             )}
 
             {/* ================= Vehicle & Installation ================= */}
-            {activeTab === TABS.VEHICLE && (
+            {activeTab === TABS.VEHICLE && !confidentialForm && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Column 1 */}
@@ -241,10 +247,16 @@ const InstallationForm = () => {
                 </>
             )}
 
+            {
+                confidentialForm && <ConfidentialForm />
+            }
+
             {/* Bottom Buttons */}
-            <div className="flex justify-end gap-3 pt-4">
-                <button
-                    className="
+            {
+                !confidentialForm && (
+                    <div className="flex justify-end gap-3 pt-4">
+                        <button
+                            className="
             text-customBlue
             border border-customBlue
             px-5 py-2.5
@@ -253,24 +265,26 @@ const InstallationForm = () => {
             transition
             hover:bg-gray-100
           "
-                >
-                    Save
-                </button>
+                        >
+                            Save
+                        </button>
 
-                <button
-                    onClick={handleNext}
-                    disabled={activeTab === TABS.VEHICLE}
-                    className={`
+                        <button
+                            onClick={handleNext}
+                            disabled={activeTab === TABS.VEHICLE}
+                            className={`
         px-5 py-2.5 rounded-lg text-sm font-medium transition
         ${activeTab === TABS.VEHICLE
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-customBlue text-gray-100 hover:bg-customBlue/90"
-                        }
+                                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                    : "bg-customBlue text-gray-100 hover:bg-customBlue/90"
+                                }
     `}
-                >
-                    {activeTab === TABS.VEHICLE ? "Submit" : "Next"}
-                </button>
-            </div>
+                        >
+                            {activeTab === TABS.VEHICLE ? "Submit" : "Next"}
+                        </button>
+                    </div>
+                )
+            }
         </div>
     );
 };

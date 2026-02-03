@@ -26,7 +26,7 @@ const Sales = () => {
             key={btn.key}
             onClick={() => setActiveForm(btn.key)}
             className={`
-              w-48 h-14 text-lg  flex items-center justify-center rounded-xl transition
+              w-48 h-14 text-lg flex items-center justify-center rounded-xl transition
               ${activeForm === btn.key 
                 ? "bg-customGreen text-white shadow-md" 
                 : "bg-gray-200 text-gray-900 hover:bg-gray-300 cursor-pointer"}
