@@ -21,11 +21,10 @@ const Header = () => {
     };
 
     return (
-
         <div className='flex flex-col gap-5'>
             <div className="flex justify-between items-center">
                 {/* Buttons - Left side */}
-                <nav className="flex items-center gap-2 flex-1">
+<nav className="flex items-center gap-2 flex-1 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible scrollbar-hide">
                     {headerButtons.map((button) => (
                         <HeaderButton
                             key={button.id}

@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }) {
         {/* Page Content */}
         <main className="p-3 sm:p-4 md:p-6 overflow-y-auto">
           {/* Card-like container */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 min-h-[calc(100vh-100px)]">
+          <div className="bg-[#E3EDF9] rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 min-h-[calc(100vh-100px)]">
             <ClientProvider>
               <Header />
               <div className="mt-4 md:mt-6">
