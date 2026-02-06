@@ -1,89 +1,123 @@
+"use client";
+
 import React from 'react'
-import { Star, StarOff, Sun, RotateCcw, Bell, Settings } from "lucide-react";
+import { Sun, RotateCcw, Bell, Settings, Menu, Search } from "lucide-react";
+// import { useSidebar } from '@/context/SidebarContext'; 
 
 const Navbar = () => {
-  const iconClasses =
-    "w-5 h-5 cursor-pointer text-gray-900 transition hover:text-customBlue hover:scale-110";
+  const iconClasses = "w-5 h-5 cursor-pointer text-gray-600 hover:text-customBlue transition-colors";
+  const [showMobileSearch, setShowMobileSearch] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
 
   return (
-    <div>
-      <nav className="
-  bg-white
-  fixed
-  top-0
-  z-20
-  border-b border-gray-200
-  w-full
-  md:left-64
-  md:w-[calc(100%-16rem)]
-">
-        <div className="flex flex-wrap items-center justify-between px-6 py-4">
-          <div className='flex gap-5'>
-            {/* starting icons */}
-          <div className="flex items-center gap-3">
-            <Settings className={iconClasses} />
-            <Star
-              className={iconClasses}
-            />
+    <div className="bg-white border-b border-gray-200 h-14 sm:h-16 flex items-center justify-between px-3 sm:px-4 md:px-6">
+      {/* Left Side */}
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-5">
+        {/* Mobile Menu Toggle Button - Only show on mobile */}
+        {isMobile && (
+          <button 
+            className="p-2 -ml-1"
+            // onClick={toggleSidebar} // Agar sidebar context hai
+            aria-label="Toggle menu"
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
 
-          </div>
-          {/* heading "Organization Setup" */}
-          <div className="flex items-center">
-            <span className="self-center text-xl text-gray-400 text-heading font-medium whitespace-nowrap">Organization Setup</span>
-          </div>
-          </div>
-
-          <div className="flex items-center md:order-2 w-full md:w-auto">
-            {/* Mobile search button - hidden on desktop */}
-            <button type="button" data-collapse-toggle="navbar-search" aria-controls="navbar-search" aria-expanded="false" className="flex items-center justify-center md:hidden text-body hover:text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-2 focus:ring-neutral-tertiary font-medium leading-5 rounded-base text-sm w-10 h-10 focus:outline-none">
-              <svg className="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
-              <span className="sr-only">Search</span>
-            </button>
-
-            {/* Search bar - full width on mobile, auto width on desktop */}
-            <label htmlFor="input-group-1" className="sr-only">Search</label>
-            <div className="relative w-full md:w-auto md:flex-1 md:max-w-md">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
-              </div>
-              <input type="text" id="input-group-1" className="block w-full ps-9 pe-3 py-2.5 bg-gray-100 rounded-xl outline-none text-heading text-sm rounded-base px-2.5 py-2 shadow-xs placeholder:text-body" placeholder="Search" />
-            </div>
-
-            {/* right side icons */}
-            <div className="flex items-center gap-4 ml-5">
-              {/* Light Theme */}
-              <Sun className={iconClasses} />
-
-              {/* Refresh */}
-              <RotateCcw className={iconClasses} />
-
-              {/* Notification */}
-              <Bell className={iconClasses} />
-
-              {/* Custom Icon (change later) */}
-              <Settings className={iconClasses} />
-            </div>
-
-            {/* Menu button - hidden as per image */}
-            <button data-collapse-toggle="navbar-search" type="button" className="hidden inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-body rounded-base md:hidden hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" aria-controls="navbar-search" aria-expanded="false">
-              <span className="sr-only">Open main menu</span>
-              <svg className="w-6 h-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="M5 7h14M5 12h14M5 17h14" /></svg>
-            </button>
-          </div>
-
-          {/* Navigation menu - hidden as per image */}
-          <div className="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-search">
-            <div className="relative mt-3 md:hidden">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                <svg className="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeLinecap="round" strokeWidth="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" /></svg>
-              </div>
-              <input type="text" id="input-group-1" className="block w-full ps-9 pe-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-2.5 py-2 shadow-xs placeholder:text-body" placeholder="Search" />
-            </div>
-          </div>
+        {/* Icons */}
+        <div className={`flex items-center gap-2 ${isMobile ? 'hidden sm:flex' : ''}`}>
+          <Settings className={iconClasses} />
         </div>
-      </nav>
+        
+        {/* Title */}
+        <span className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-400 font-medium max-w-[120px] sm:max-w-[200px] md:max-w-none text-nowrap">
+          Organization Setup
+        </span>
+      </div>
+
+      {/* Right Side */}
+      <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
+        {/* Mobile Search Toggle Button */}
+        {isMobile && !showMobileSearch && (
+          <button 
+            className="p-2"
+            onClick={() => setShowMobileSearch(true)}
+            aria-label="Search"
+          >
+            <Search className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
+
+        {/* Search Bar - Mobile expanded view */}
+        {isMobile && showMobileSearch ? (
+          <div className="absolute left-0 right-0 top-0 h-14 bg-white border-b border-gray-200 flex items-center px-3 z-10">
+            <div className="flex items-center w-full">
+              <button 
+                className="p-2 mr-2"
+                onClick={() => setShowMobileSearch(false)}
+                aria-label="Close search"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <Search className="w-4 h-4 text-gray-500" />
+                </div>
+                <input 
+                  type="text" 
+                  className="w-full pl-10 pr-3 py-2 bg-gray-100 rounded-lg outline-none text-gray-800 text-sm placeholder:text-gray-500"
+                  placeholder="Search..." 
+                  autoFocus
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Desktop Search Bar */
+          <div className="hidden md:block relative">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-gray-500" />
+            </div>
+            <input 
+              type="text" 
+              className="pl-10 pr-3 py-2 bg-gray-100 rounded-xl outline-none text-gray-800 text-sm w-48 lg:w-64 placeholder:text-gray-500" 
+              placeholder="Search..." 
+            />
+          </div>
+        )}
+
+        {/* Icons - Mobile: less icons, Desktop: all icons */}
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+          {/* Mobile: Only essential icons */}
+          {isMobile ? (
+            <>
+              <Bell className={iconClasses} />
+              <Settings className={iconClasses} />
+            </>
+          ) : (
+            <>
+              <Sun className={iconClasses} />
+              <RotateCcw className={iconClasses} />
+              <Bell className={iconClasses} />
+              <Settings className={iconClasses} />
+            </>
+          )}
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

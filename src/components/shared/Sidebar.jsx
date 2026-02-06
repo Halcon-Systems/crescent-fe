@@ -1,159 +1,6 @@
-// "use client";
-
-// import React, { useState } from "react";
-// import Image from "next/image";
-// import {
-//   User,
-//   LayoutDashboard,
-//   Users,
-//   Truck,
-//   MapPin,
-//   Boxes,
-//   Wallet,
-//   Bell,
-//   Building2,
-//   FileText,
-// } from "lucide-react";
-// import LogoSVG from "@/components/svg/logoSVG";
-// import Link from "next/link";
-
-// const Sidebar = () => {
-//   const [open, setOpen] = useState(false);
-//   const [hasUserImage, setHasUserImage] = useState(true);
-
-//   const userImage = "/users/user.png"; // optional
-
-//   const MenuItem = ({ icon: Icon, label, active }) => (
-//     <a
-//       href="/dashboard/clients"
-//       className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition
-//         ${
-//           active
-//             ? "bg-customGreen text-white"
-//             : "text-gray-700 hover:bg-gray-100"
-//         }
-//       `}
-//     >
-//       <Icon className="w-5 h-5" />
-//       <span className="flex-1">{label}</span>
-//     </a>
-//   );
-
-//   return (
-//     <>
-//       {/* Mobile toggle */}
-//       <button className="sm:hidden p-2 m-2">
-//         <svg width="24" height="24" fill="none">
-//           <path
-//             stroke="currentColor"
-//             strokeWidth={2}
-//             d="M5 7h14M5 12h14M5 17h10"
-//           />
-//         </svg>
-//       </button>
-
-//       <aside className="fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200">
-//         <div className="flex flex-col h-full px-4 py-4 overflow-y-auto">
-
-//           {/* LOGO */}
-//           <div className="flex items-center gap-2 mb-4 px-2">
-//             <LogoSVG />
-//           </div>
-
-//           {/* USER DROPDOWN */}
-//           <div className="relative border-y border-gray-200 py-2 mb-4">
-//             <button
-//               onClick={() => setOpen(!open)}
-//               className="flex items-center w-full gap-3 px-2 py-2 rounded-md hover:bg-gray-100 transition cursor-pointer"
-//             >
-//               {/* Avatar */}
-//               <div className="w-8 h-8 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
-//                 {hasUserImage ? (
-//                   <Image
-//                     src={userImage}
-//                     alt="User"
-//                     width={32}
-//                     height={32}
-//                     className="object-cover"
-//                     onError={() => setHasUserImage(false)}
-//                   />
-//                 ) : (
-//                   <User className="w-4 h-4 text-gray-600" />
-//                 )}
-//               </div>
-
-//               {/* Name */}
-//               <span className="flex-1 text-sm font-medium text-left truncate">
-//                 User Name
-//               </span>
-
-//               {/* Arrow */}
-//               <svg
-//                 className={`w-4 h-4 transition-transform ${
-//                   open ? "rotate-180" : ""
-//                 }`}
-//                 fill="none"
-//                 viewBox="0 0 24 24"
-//               >
-//                 <path
-//                   stroke="currentColor"
-//                   strokeWidth={2}
-//                   d="m19 9-7 7-7-7"
-//                 />
-//               </svg>
-//             </button>
-
-//             {/* Dropdown */}
-//             {open && (
-//               <div className="absolute left-0 mt-2 w-full bg-white border rounded-md shadow-lg z-50">
-//                 <Link className="block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer">
-//                   Profile
-//                 </Link>
-//                 <Link className="block px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer">
-//                   Settings
-//                 </Link>
-//                 <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer">
-//                   Logout
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-
-//           {/* MENU */}
-//           <MenuItem icon={LayoutDashboard} label="Dashboards" />
-//           <MenuItem icon={Users} label="Clients" active/>
-//           <MenuItem icon={Truck} label="Vehicles" />
-
-//           {/* PAGES */}
-//           <p className="mt-4 mb-1 px-2 text-xs font-semibold uppercase text-gray-400">
-//             Pages
-//           </p>
-//           <MenuItem icon={MapPin} label="Geo Fence" />
-//           <MenuItem icon={Boxes} label="Inventory" />
-//           <MenuItem icon={Wallet} label="Finance & Accounts" />
-//           <MenuItem icon={Bell} label="Complaints" />
-
-//           {/* SETUP */}
-//           <p className="mt-4 mb-1 px-2 text-xs font-semibold uppercase text-gray-400">
-//             Setup
-//           </p>
-//           <MenuItem icon={Bell} label="Notifications" />
-//           <MenuItem icon={Building2} label="Organization Setup" />
-//           <MenuItem icon={FileText} label="Reports" />
-
-//         </div>
-//       </aside>
-//     </>
-//   );
-// };
-
-// export default Sidebar;
-
-
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
 import {
   User,
   LayoutDashboard,
@@ -166,142 +13,164 @@ import {
   Building2,
   FileText,
   ChevronDown,
+  Menu,
+  X,
 } from "lucide-react";
 import LogoSVG from "@/components/svg/logoSVG";
 import Link from "next/link";
 
 const Sidebar = () => {
-  const [open, setOpen] = useState(false);
-  const [hasUserImage, setHasUserImage] = useState(true);
-
-  // Dashboard dropdown (default open)
   const [dashboardOpen, setDashboardOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const userImage = "/users/user.png";
+  useEffect(() => {
+    const checkMobile = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 1024); 
+      
+      if (width >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  const MenuItem = ({ icon: Icon, label, active }) => (
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape' && sidebarOpen && isMobile) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [sidebarOpen, isMobile]);
+
+  const MenuItem = ({ icon: Icon, label, active, href = "/dashboard/clients" }) => (
     <Link
-      href="/dashboard/clients"
-      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition
+      href={href}
+      onClick={() => isMobile && setSidebarOpen(false)}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200
         ${active
-          ? "bg-customGreen text-white"
-          : "text-gray-700 hover:bg-gray-100"
+          ? "bg-customGreen text-white shadow-sm"
+          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
         }
       `}
     >
       <Icon className="w-5 h-5" />
-      <span className="flex-1">{label}</span>
+      <span className="flex-1 font-medium">{label}</span>
     </Link>
   );
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button className="sm:hidden p-2 m-2">
-        <svg width="24" height="24" fill="none">
-          <path
-            stroke="currentColor"
-            strokeWidth={2}
-            d="M5 7h14M5 12h14M5 17h10"
-          />
-        </svg>
-      </button>
+      {/* Mobile Toggle Button - Only show below 1024px */}
+      {isMobile && (
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="md:hidden fixed top-2 sm:top-3 left-2 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+          aria-label="Toggle sidebar"
+        >
+          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      )}
 
-      <aside className="fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200">
-        <div className="flex flex-col h-full px-4 py-4 overflow-y-auto">
-
-          {/* LOGO */}
-          <div className="flex items-center gap-2 mb-4 px-2">
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 h-screen bg-white border-r border-gray-200 z-40
+        ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'} 
+        transition-transform duration-300 ease-in-out w-64
+      `}>
+        <div className="flex flex-col h-full px-4 py-6 overflow-y-auto">
+          {/* Logo aur close button mobile ke liye */}
+          <div className="flex items-center justify-between mb-8 mt-8 px-2">
             <LogoSVG />
-          </div>
-
-          {/* USER DROPDOWN */}
-          <div className="relative border-y border-gray-200 py-2 mb-4">
-            <button
-              onClick={() => setOpen(!open)}
-              className="flex items-center w-full gap-3 px-2 py-2 rounded-md hover:bg-gray-100 transition"
-            >
-              <div className="w-8 h-8 rounded-full overflow-hidden border bg-gray-100 flex items-center justify-center">
-                {hasUserImage ? (
-                  <Image
-                    src={userImage}
-                    alt="User"
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    onError={() => setHasUserImage(false)}
-                  />
-                ) : (
-                  <User className="w-4 h-4 text-gray-600" />
-                )}
-              </div>
-
-              <span className="flex-1 text-sm font-medium text-left truncate">
-                User Name
-              </span>
-
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""
-                  }`}
-              />
-            </button>
-
-            {open && (
-              <div className="absolute left-0 mt-2 w-full bg-white border rounded-md shadow-lg z-50">
-                <Link href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
-                  Profile
-                </Link>
-                <Link href="#" className="block px-4 py-2 text-sm hover:bg-gray-100">
-                  Settings
-                </Link>
-                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                  Logout
-                </button>
-              </div>
+            {isMobile && (
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 md:hidden"
+                aria-label="Close sidebar"
+              >
+              </button>
             )}
           </div>
 
-          {/* DASHBOARD DROPDOWN */}
-          <button
-            onClick={() => setDashboardOpen(!dashboardOpen)}
-            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm w-full transition hover:bg-gray-100"
-          >
-            <LayoutDashboard className="w-5 h-5 text-gray-700" />
-            <span className="flex-1 text-left text-gray-700">Dashboards</span>
-            <ChevronDown
-              className={`w-4 h-4 transition-transform ${dashboardOpen ? "rotate-180" : ""
-                }`}
-            />
-          </button>
-
-          {/* Dashboard Submenu */}
-          {dashboardOpen && (
-            <div className="mt-1 space-y-1">
-              {/* <SubMenuItem label="Clients" active />
-              <SubMenuItem label="Vehicles" /> */}
-              <MenuItem icon={Users} label="Clients" active />
-              <MenuItem icon={Truck} label="Vehicles" />
+          {/* User Profile */}
+          <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-gray-200">
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100 flex items-center justify-center">
+              <User className="w-5 h-5 text-gray-600" />
             </div>
-          )}
+            <div>
+              <div className="font-medium text-gray-800 text-sm">User Name</div>
+              <div className="text-xs text-gray-500">Admin</div>
+            </div>
+          </div>
 
-          {/* PAGES */}
-          <p className="mt-4 mb-1 px-2 text-xs font-semibold uppercase text-gray-400">
-            Pages
-          </p>
-          <MenuItem icon={MapPin} label="Geo Fence" />
-          <MenuItem icon={Boxes} label="Inventory" />
-          <MenuItem icon={Wallet} label="Finance & Accounts" />
-          <MenuItem icon={Bell} label="Complaints" />
+          {/* Navigation Menu */}
+          <nav className="space-y-1">
+            {/* Dashboard Section */}
+            <div className="mb-2">
+              <button
+                onClick={() => setDashboardOpen(!dashboardOpen)}
+                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <LayoutDashboard className="w-5 h-5 text-gray-700" />
+                  <span className="font-medium text-gray-700">Dashboards</span>
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${dashboardOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              
+              {dashboardOpen && (
+                <div className="mt-1 ml-8 space-y-1">
+                  <MenuItem icon={Users} label="Clients" active />
+                  <MenuItem icon={Truck} label="Vehicles" />
+                </div>
+              )}
+            </div>
 
-          {/* SETUP */}
-          <p className="mt-4 mb-1 px-2 text-xs font-semibold uppercase text-gray-400">
-            Setup
-          </p>
-          <MenuItem icon={Bell} label="Notifications" />
-          <MenuItem icon={Building2} label="Organization Setup" />
-          <MenuItem icon={FileText} label="Reports" />
+            {/* Pages Section */}
+            <div className="mt-6">
+              <div className="px-3 mb-2">
+                <span className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Pages</span>
+              </div>
+              <div className="space-y-1">
+                <MenuItem icon={MapPin} label="Geo Fence" />
+                <MenuItem icon={Boxes} label="Inventory" />
+                <MenuItem icon={Wallet} label="Finance & Accounts" />
+                <MenuItem icon={Bell} label="Complaints" />
+              </div>
+            </div>
+
+            {/* Setup Section */}
+            <div className="mt-6">
+              <div className="px-3 mb-2">
+                <span className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Setup</span>
+              </div>
+              <div className="space-y-1">
+                <MenuItem icon={Bell} label="Notifications" />
+                <MenuItem icon={Building2} label="Organization Setup" />
+                <MenuItem icon={FileText} label="Reports" />
+              </div>
+            </div>
+
+          </nav>
         </div>
       </aside>
+
+      {sidebarOpen && isMobile && (
+        <div 
+          className="fixed inset-0 bg-gray-900/5 backdrop-blur-[2px] backdrop-saturate-150 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </>
   );
 };

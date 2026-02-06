@@ -14,21 +14,17 @@ const Header = () => {
 
     const handleButtonClick = (pageKey) => {
         setActivePage(pageKey);
-        // Yahan par page change ka logic add kar sakte hain
-        // Jaise routing ya state update
     };
 
     const handleNotificationClick = () => {
-        // Notification panel open karna ya count reset karna
         setHasNotifications(false);
-        // Notification panel open logic
     };
-    return (
 
+    return (
         <div className='flex flex-col gap-5'>
-            <div className="flex justify-between gap-4">
-                {/* Buttons */}
-                <nav className="flex items-center gap-2 flex-1">
+            <div className="flex justify-between items-center">
+                {/* Buttons - Left side */}
+<nav className="flex items-center gap-2 flex-1 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible scrollbar-hide">
                     {headerButtons.map((button) => (
                         <HeaderButton
                             key={button.id}

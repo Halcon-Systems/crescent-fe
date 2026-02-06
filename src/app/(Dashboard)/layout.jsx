@@ -6,32 +6,34 @@ import { ClientProvider } from "@/context/clientContext";
 export default function DashboardLayout({ children }) {
   
   return (
-    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      
-      {/* Sidebar */}
-      <aside className="w-64 hidden md:block">
+    <div className="min-h-screen bg-gray-50">
+      <div className="lg:hidden fixed top-4 left-4 z-50">
+      </div>
+
+      <aside className="fixed left-0 top-0 h-screen z-30 w-64">
         <Sidebar />
       </aside>
 
       {/* Main Content */}
-      <div className="flex flex-col flex-1">
+      <div className="w-full lg:ml-64 transition-all duration-300">
         
         {/* Navbar */}
-        <header className="h-16">
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200">
           <Navbar />
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-4 overflow-y-auto bg-gray-100 dark:bg-gray-900">
+        <main className="p-3 sm:p-4 md:p-6 overflow-y-auto">
           {/* Card-like container */}
-          <div className="bg-blue-100/50 rounded-xl shadow-lg p-6 min-h-full">
-          <ClientProvider>
-            <Header />
-            {children}
-          </ClientProvider>
+          <div className="bg-[#E3EDF9] rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 min-h-[calc(100vh-100px)]">
+            <ClientProvider>
+              <Header />
+              <div className="mt-4 md:mt-6">
+                {children}
+              </div>
+            </ClientProvider>
           </div>
         </main>
-
       </div>
     </div>
   );

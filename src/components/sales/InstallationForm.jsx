@@ -19,7 +19,8 @@ const InstallationForm = () => {
 
     const tabButtonClasses = (isActive) =>
         `
-    px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+    px-3 py-2 md:px-4 md:py-2.5 rounded-lg text-sm md:text-sm font-medium transition-all duration-200
+    whitespace-nowrap
     ${isActive
             ? "bg-customGreen text-gray-100 shadow-sm"
             : "border border-customGreen text-gray-900 hover:bg-customGreen/10 cursor-pointer"
@@ -36,11 +37,11 @@ const InstallationForm = () => {
 
 
     return (
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex flex-col gap-4 md:gap-6">
             {/* Tabs */}
             {
                 !confidentialForm && (
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2 md:gap-3 overflow-x-auto pb-1">
                         <button
                             className={tabButtonClasses(activeTab === TABS.CLIENT)}
                             onClick={() => setActiveTab(TABS.CLIENT)}
@@ -52,14 +53,14 @@ const InstallationForm = () => {
                             className={tabButtonClasses(activeTab === TABS.PRODUCT)}
                             onClick={() => setActiveTab(TABS.PRODUCT)}
                         >
-                            Product & Package Details
+                            Product & Package
                         </button>
 
                         <button
                             className={tabButtonClasses(activeTab === TABS.VEHICLE)}
                             onClick={() => setActiveTab(TABS.VEHICLE)}
                         >
-                            Vehicle & Installation Details
+                            Vehicle & Installation
                         </button>
                     </div>
                 )
@@ -68,66 +69,66 @@ const InstallationForm = () => {
             {/* ================= Client Details Form ================= */}
             {activeTab === TABS.CLIENT && !confidentialForm && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Client Category" required>
-                                <Select placeholder="Select" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Client Category" required className="text-sm">
+                                <Select placeholder="Select" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Select IR No.">
-                                <Select placeholder="Select" />
+                            <FieldWrapper label="Select IR No." className="text-sm">
+                                <Select placeholder="Select" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Full Name" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Full Name" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="CNIC No." required>
-                                <Input placeholder="12345-1234567-1" />
+                            <FieldWrapper label="CNIC No." required className="text-sm">
+                                <Input placeholder="12345-1234567-1" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Phone Home" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Phone Home" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Email ID" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Email ID" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Address" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Address" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
 
                         {/* Column 2 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Client Status" required>
-                                <Select placeholder="Select" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Client Status" required className="text-sm">
+                                <Select placeholder="Select" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Cell No." required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Cell No." required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Father Name" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Father Name" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Date of Birth">
-                                <DateInput placeholder="Select (dd/mm/yyyy)" />
+                            <FieldWrapper label="Date of Birth" className="text-sm">
+                                <DateInput placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Phone Office">
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Phone Office" className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Company / Department">
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Company / Department" className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Address Line 2">
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Address Line 2" className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
                     </div>
@@ -137,74 +138,76 @@ const InstallationForm = () => {
             {/* ================= Product & Package ================= */}
             {activeTab === TABS.PRODUCT && !confidentialForm && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Product" required>
-                                <Select placeholder="Select" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Product" required className="text-sm">
+                                <Select placeholder="Select" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Installation Date" required>
-                                <DateInput placeholder="Select (dd/mm/yyyy)" />
+                            <FieldWrapper label="Installation Date" required className="text-sm">
+                                <DateInput placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
 
                         {/* Column 2 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Package Type" required>
-                                <Select placeholder="Select" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Package Type" required className="text-sm">
+                                <Select placeholder="Select" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Renewal Date" required>
-                                <DateInput placeholder="Select (dd/mm/yyyy)" />
+                            <FieldWrapper label="Renewal Date" required className="text-sm">
+                                <DateInput placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
                     </div>
-                    {/* Heading */}
-                    <h2 className="text-xl font-semibold text-gray-800">
-                        Device & Accessories
-                    </h2>
+                    
+                    {/* Device & Accessories Section */}
+                    <div className="mt-4 md:mt-6">
+                        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-3 md:mb-4">
+                            Device & Accessories
+                        </h2>
 
-                    {/* Form Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* col 1 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Product" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Zone" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Device Combo" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select SIM" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 2" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+                            {/* col 1 */}
+                            <div className="flex flex-col gap-3 md:gap-3">
+                                <FieldWrapper label="Select Product" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select Zone" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select Device Combo" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select SIM" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select Accessories 2" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                            </div>
 
-                        {/* Row 2 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Select Package Type" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
+                            {/* Column 2 */}
+                            <div className="flex flex-col gap-3 md:gap-3">
+                                <FieldWrapper label="Select Package Type" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
 
-                            <FieldWrapper label="Assign Technician" required>
-                                <Input placeholder="Type here" />
-                            </FieldWrapper>
+                                <FieldWrapper label="Assign Technician" required className="text-sm">
+                                    <Input placeholder="Type here" className="text-sm py-2" />
+                                </FieldWrapper>
 
-                            <FieldWrapper label="Select Device" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 1" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 3" required>
-                                <Select placeholder="Select" />
-                            </FieldWrapper>
+                                <FieldWrapper label="Select Device" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select Accessories 1" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                                <FieldWrapper label="Select Accessories 3" required className="text-sm">
+                                    <Select placeholder="Select" className="text-sm py-2" />
+                                </FieldWrapper>
+                            </div>
                         </div>
                     </div>
                 </>
@@ -213,35 +216,33 @@ const InstallationForm = () => {
             {/* ================= Vehicle & Installation ================= */}
             {activeTab === TABS.VEHICLE && !confidentialForm && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Registration No." required>
-                                <Input placeholder="Type (ABC-1234)" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Registration No." required className="text-sm">
+                                <Input placeholder="Type (ABC-1234)" className="text-sm py-2" />
                             </FieldWrapper>
-                            <FieldWrapper label="Engine No." required>
-                                <Input placeholder="Auto" />
+                            <FieldWrapper label="Engine No." required className="text-sm">
+                                <Input placeholder="Auto" className="text-sm py-2" />
                             </FieldWrapper>
-                            <FieldWrapper label="Chassis No." required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Chassis No." required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
-
                         </div>
 
                         {/* Column 2 */}
-                        <div className="flex flex-col gap-4">
-                            <FieldWrapper label="Make/Model" required>
-                                <Input placeholder="Type here" />
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Make/Model" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Year" required>
-                                <DateInput placeholder="Select (dd/mm/yyyy)" />
+                            <FieldWrapper label="Year" required className="text-sm">
+                                <DateInput placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
 
-                            <FieldWrapper label="Color" required>
-                                <Input placeholder="Type here" />
+                            <FieldWrapper label="Color" required className="text-sm">
+                                <Input placeholder="Type here" className="text-sm py-2" />
                             </FieldWrapper>
-
                         </div>
                     </div>
                 </>
@@ -254,17 +255,18 @@ const InstallationForm = () => {
             {/* Bottom Buttons */}
             {
                 !confidentialForm && (
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
                         <button
                             className="
-            text-customBlue
-            border border-customBlue
-            px-5 py-2.5
-            rounded-lg
-            text-sm font-medium
-            transition
-            hover:bg-gray-100
-          "
+                w-full sm:w-auto
+                text-customBlue
+                border border-customBlue
+                px-4 py-2
+                rounded-lg
+                text-sm font-medium
+                transition
+                hover:bg-gray-100
+            "
                         >
                             Save
                         </button>
@@ -273,12 +275,13 @@ const InstallationForm = () => {
                             onClick={handleNext}
                             disabled={activeTab === TABS.VEHICLE}
                             className={`
-        px-5 py-2.5 rounded-lg text-sm font-medium transition
-        ${activeTab === TABS.VEHICLE
+                w-full sm:w-auto
+                px-4 py-2 rounded-lg text-sm font-medium transition
+                ${activeTab === TABS.VEHICLE
                                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                     : "bg-customBlue text-gray-100 hover:bg-customBlue/90"
                                 }
-    `}
+            `}
                         >
                             {activeTab === TABS.VEHICLE ? "Submit" : "Next"}
                         </button>
