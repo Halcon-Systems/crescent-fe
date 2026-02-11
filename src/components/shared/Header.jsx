@@ -22,9 +22,9 @@ const Header = () => {
 
     return (
         <div className='flex flex-col gap-5'>
-            <div className="flex justify-between items-center">
-                {/* Buttons - Left side */}
-<nav className="flex items-center gap-2 flex-1 overflow-x-auto pb-2 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible scrollbar-hide">
+            <div className="flex justify-between items-center gap-2 sm:gap-4">
+                {/* Buttons - Left side with flexible width */}
+                <nav className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 overflow-x-auto pb-2 scrollbar-hide">
                     {headerButtons.map((button) => (
                         <HeaderButton
                             key={button.id}
@@ -36,9 +36,8 @@ const Header = () => {
                     ))}
                 </nav>
 
-                {/* Right side - Notification and User Menu */}
-                <div className="flex items-center gap-4">
-                    {/* Notification Bell with click handler */}
+                {/* Right side - Notification (fixed width) */}
+                <div className="flex items-center flex-shrink-0">
                     <button
                         onClick={handleNotificationClick}
                         className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors relative"
