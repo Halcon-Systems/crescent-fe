@@ -2,6 +2,7 @@ import Header from "@/components/shared/Header";
 import Navbar from "@/components/shared/Navbar";
 import Sidebar from "@/components/shared/Sidebar";
 import { ClientProvider } from "@/context/clientContext";
+import { InventoryProvider } from "@/context/inventoryContext";
 
 export default function DashboardLayout({ children }) {
   return (
@@ -30,12 +31,13 @@ export default function DashboardLayout({ children }) {
             <div className="bg-[#E3EDF9] rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 min-h-[calc(100vh-110px)]">
               
               <ClientProvider>
-                <Header />
+                <InventoryProvider>
+                  <Header />
 
-                <div className="mt-4 md:mt-6 w-full">
-                  {children}
-                </div>
-
+                  <div className="mt-4 md:mt-6 w-full">
+                    {children}
+                  </div>
+                </InventoryProvider>
               </ClientProvider>
 
             </div>

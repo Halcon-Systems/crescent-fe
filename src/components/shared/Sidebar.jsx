@@ -130,8 +130,9 @@ const Sidebar = () => {
               
               {dashboardOpen && (
                 <div className="mt-1 ml-8 space-y-1">
-                  <MenuItem icon={Users} label="Clients" active />
-                  <MenuItem icon={Truck} label="Vehicles" />
+                  <MenuItem icon={Users} label="Clients" href="/dashboard/clients" />
+                  <MenuItem icon={Truck} label="Vehicles" href="/dashboard/vehicles" />
+                  <MenuItem icon={Boxes} label="Inventory" href="/dashboard/inventory" />
                 </div>
               )}
             </div>
@@ -142,10 +143,9 @@ const Sidebar = () => {
                 <span className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Pages</span>
               </div>
               <div className="space-y-1">
-                <MenuItem icon={MapPin} label="Geo Fence" />
-                <MenuItem icon={Boxes} label="Inventory" />
-                <MenuItem icon={Wallet} label="Finance & Accounts" />
-                <MenuItem icon={Bell} label="Complaints" />
+                <MenuItem icon={MapPin} label="Geo Fence" href="/dashboard/geo-fence" />
+                <MenuItem icon={Wallet} label="Finance & Accounts" href="/dashboard/accounts" />
+                <MenuItem icon={Bell} label="Complaints" href="/dashboard/complaints" />
               </div>
             </div>
 
