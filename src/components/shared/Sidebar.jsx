@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Menu,
   X,
+  UtilityPole,
 } from "lucide-react";
 import LogoSVG from "@/components/svg/logoSVG";
 import Link from "next/link";
@@ -132,6 +133,7 @@ const Sidebar = () => {
                 <div className="mt-1 ml-8 space-y-1">
                   <MenuItem icon={Users} label="Clients" active />
                   <MenuItem icon={Truck} label="Vehicles" />
+                  <MenuItem icon={Boxes} label="Inventory" />
                 </div>
               )}
             </div>
@@ -143,7 +145,7 @@ const Sidebar = () => {
               </div>
               <div className="space-y-1">
                 <MenuItem icon={MapPin} label="Geo Fence" />
-                <MenuItem icon={Boxes} label="Inventory" />
+                {/* <MenuItem icon={Boxes} label="Inventory" /> */}
                 <MenuItem icon={Wallet} label="Finance & Accounts" />
                 <MenuItem icon={Bell} label="Complaints" />
               </div>
