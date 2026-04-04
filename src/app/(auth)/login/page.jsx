@@ -7,8 +7,7 @@ import { loginSuccess } from '@/redux/slices/userSlice';
 import { publicRequest } from '@/lib/RequestMethods';
 import toast from 'react-hot-toast';
 import * as yup from 'yup';
-import Toggle from 'react-toggle';
-import "react-toggle/style.css";
+
 
 // Yup validation schema
 const loginSchema = yup.object().shape({

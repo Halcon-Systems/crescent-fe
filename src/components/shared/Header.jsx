@@ -21,7 +21,7 @@ const Header = () => {
     };
 
     return (
-        <div className='flex flex-col gap-5'>
+        <div className='flex flex-col gap-2'>
             <div className="flex justify-between items-center gap-2 sm:gap-4">
                 {/* Buttons - Left side with flexible width */}
                 <nav className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0 overflow-x-auto pb-2 scrollbar-hide">

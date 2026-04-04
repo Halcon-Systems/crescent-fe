@@ -137,7 +137,7 @@ const Pagination = () => {
               key={i}
               onClick={() => typeof p === 'number' && setCurrentPage(p)}
               disabled={p === "..."}
-              className={`min-w-[32px] h-8 rounded transition-all text-sm ${
+              className={`min-w-8 h-8 rounded transition-all text-sm ${
                 p === currentPage
                   ? "bg-blue-600 text-white"
                   : p === "..."
@@ -194,7 +194,7 @@ const MobileTableCard = ({ row, index }) => {
         
         <div className="flex items-center justify-between">
           <div className="text-xs text-gray-500 font-medium">Email</div>
-          <div className="text-sm text-blue-600 truncate max-w-[180px]">{row.email}</div>
+          <div className="text-sm text-blue-600 truncate max-w-45">{row.email}</div>
         </div>
         
         <div className="flex items-center justify-between">
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                 <tr key={row.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium text-sm mr-3">
+                      <div className="shrink-0 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-medium text-sm mr-3">
                         CW
                       </div>
                       <div className="font-medium text-gray-900">{row.name}</div>

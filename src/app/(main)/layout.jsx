@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }) {
         <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-x-hidden">
           
           {/* Center Content Controller */}
-          <div className="w-full max-w-[1400px] mx-auto">
+          <div className="w-full max-w-400 mx-auto">
             
             {/* Card Container */}
             <div className="bg-[#E3EDF9] rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 min-h-[calc(100vh-110px)]">

@@ -1,9 +1,9 @@
 
-const Input = ({ placeholder, type = "text" }) => (
+const Input = ({ placeholder, type = "text" , className = ""}) => (
     <input
         type={type}
         placeholder={placeholder}
-        className="bg-transparent outline-none text-sm md:text-base text-gray-900 placeholder-gray-400 w-full"
+        className={`${className} bg-transparent outline-none text-sm md:text-base text-gray-900 placeholder-gray-400 w-full`}
     />
 );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   User,
   LayoutDashboard,
@@ -21,6 +22,7 @@ import LogoSVG from "@/components/svg/logoSVG";
 import Link from "next/link";
 
 const Sidebar = () => {
+  const pathname = usePathname();
   const [dashboardOpen, setDashboardOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -52,21 +54,24 @@ const Sidebar = () => {
     return () => window.removeEventListener('keydown', handleEsc);
   }, [sidebarOpen, isMobile]);
 
-  const MenuItem = ({ icon: Icon, label, active, href = "/dashboard/clients" }) => (
-    <Link
-      href={href}
-      onClick={() => isMobile && setSidebarOpen(false)}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200
-        ${active
-          ? "bg-customGreen text-white shadow-sm"
-          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-        }
-      `}
-    >
-      <Icon className="w-5 h-5" />
-      <span className="flex-1 font-medium">{label}</span>
-    </Link>
-  );
+  const MenuItem = ({ icon: Icon, label, href = "/dashboard/clients" }) => {
+    const isActive = pathname === href || pathname.startsWith(href + "/");
+    return (
+      <Link
+        href={href}
+        onClick={() => isMobile && setSidebarOpen(false)}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200
+          ${isActive
+            ? "bg-customGreen text-white shadow-sm"
+            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          }
+        `}
+      >
+        <Icon className="w-5 h-5" />
+        <span className="flex-1 font-medium">{label}</span>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -89,7 +94,7 @@ const Sidebar = () => {
       `}>
         <div className="flex flex-col h-full px-4 py-6 overflow-y-auto">
           {/* Logo aur close button mobile ke liye */}
-          <div className="flex items-center justify-between mb-8 mt-8 px-2">
+          <div className="flex items-center justify-between mb-0 px-2 pb-6 border-b border-gray-200">
             <LogoSVG />
             {isMobile && (
               <button 
@@ -102,7 +107,7 @@ const Sidebar = () => {
           </div>
 
           {/* User Profile */}
-          <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-gray-200">
+          <div className="flex items-center gap-3 px-2 py-4 mb-6 border-b border-gray-200">
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100 flex items-center justify-center">
               <User className="w-5 h-5 text-gray-600" />
             </div>
@@ -131,9 +136,8 @@ const Sidebar = () => {
               
               {dashboardOpen && (
                 <div className="mt-1 ml-8 space-y-1">
-                  <MenuItem icon={Users} label="Clients" active />
-                  <MenuItem icon={Truck} label="Vehicles" />
-                  <MenuItem icon={Boxes} label="Inventory" />
+                  <MenuItem icon={Users} label="Clients" href="/dashboard/clients" />
+                  <MenuItem icon={Truck} label="Vehicles" href="/dashboard/vehicles" />
                 </div>
               )}
             </div>
@@ -144,10 +148,11 @@ const Sidebar = () => {
                 <span className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Pages</span>
               </div>
               <div className="space-y-1">
-                <MenuItem icon={MapPin} label="Geo Fence" />
-                {/* <MenuItem icon={Boxes} label="Inventory" /> */}
-                <MenuItem icon={Wallet} label="Finance & Accounts" />
-                <MenuItem icon={Bell} label="Complaints" />
+                <MenuItem icon={MapPin} label="Geofence" href="/dashboard/geofence" />
+                <MenuItem icon={Boxes} label="Inventory" href="/dashboard/inventory" />
+                <MenuItem icon={Wallet} label="Finance & Accounts" href="/dashboard/finance" />
+                <MenuItem icon={UtilityPole} label="RoboCall" href="/dashboard/robocall" />
+                <MenuItem icon={Bell} label="Complaints" href="/dashboard/complaints" />
               </div>
             </div>
 
@@ -157,9 +162,9 @@ const Sidebar = () => {
                 <span className="text-xs font-semibold uppercase text-gray-400 tracking-wider">Setup</span>
               </div>
               <div className="space-y-1">
-                <MenuItem icon={Bell} label="Notifications" />
-                <MenuItem icon={Building2} label="Organization Setup" />
-                <MenuItem icon={FileText} label="Reports" />
+                <MenuItem icon={Bell} label="Notifications" href="/dashboard/notifications" />
+                <MenuItem icon={Building2} label="Organization Setup" href="/setup/organization-setup" />
+                <MenuItem icon={FileText} label="Reports" href="/dashboard/reports" />
               </div>
             </div>
 

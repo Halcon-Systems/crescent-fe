@@ -1,6 +1,6 @@
-const FieldWrapper = ({ label, required, children }) => (
-    <div className="bg-gray-100 rounded-lg p-3 md:p-4 flex flex-col gap-1 md:gap-2 h-full">
-        <label className="text-xs md:text-sm font-medium text-gray-700">
+const FieldWrapper = ({ label, required, children, className = "" }) => (
+    <div className={`bg-[#E2E6F999] rounded-lg py-0.5 md:py-1 md:pt-2 p-2 md:p-3 flex flex-col gap-0.5 md:gap-0 ${className}`}>
+        <label className="text-xs md:text-sm font-light text-gray-700">
             {label} {required && <span className="text-red-500">*</span>}
         </label>
         {children}
