@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, X, Minus, Loader } from 'lucide-react';
-import { purchaseRequestService, itemService, storeService } from '@/services/inventory';
-import officeService from '@/services/office.service';
 
 const PurchaseRequestPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -41,40 +39,9 @@ const PurchaseRequestPage = () => {
     fetchStores();
     fetchItems();
     loadUserAndOffice();
-    fetchOffices();
-  }, [currentPage, itemsPerPage]);
+  }, []);
 
-  // Fetch offices on component mount
-  const fetchOffices = async () => {
-    try {
-      setLoadingOffices(true);
-      const officesList = await officeService.fetchOfficesByOrganization();
-      console.log('[PurchaseRequestPage] Fetched offices:', officesList);
-      
-      if (!officesList || officesList.length === 0) {
-        console.warn('[PurchaseRequestPage] No offices returned');
-        setLoadingOffices(false);
-        return;
-      }
-      
-      setOffices(officesList);
-      
-      // Auto-select first office
-      const firstOffice = officesList[0];
-      setPurchaseFormData(prev => ({
-        ...prev,
-        officeId: firstOffice.id
-      }));
-      
-    } catch (error) {
-      console.error('Error fetching offices:', error);
-      toast.error('Failed to load offices');
-    } finally {
-      setLoadingOffices(false);
-    }
-  };
-
-  const loadUserAndOffice = async () => {
+  const loadUserAndOffice = () => {
     try {
       // Get current user from localStorage or auth context
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -100,115 +67,35 @@ const PurchaseRequestPage = () => {
       
       console.log('[PurchaseRequestPage] Office data extracted:', officeData);
       setOffice(officeData);
-      
-      // Fetch stores - for admins with no office, fetch all organization stores
-      // For regular users, fetch office-specific stores
-      if (officeData.id) {
-        console.log('[PurchaseRequestPage] Fetching stores for officeId:', officeData.id);
-        await fetchStoresForOffice(officeData.id);
-      } else {
-        console.log('[PurchaseRequestPage] No office ID found (admin user), fetching all organization stores');
-        await fetchAllStores();
-      }
-      
+      setOffices(officeData.id ? [officeData] : []);
+      setPurchaseFormData(prev => ({
+        ...prev,
+        officeId: officeData.id || ''
+      }));
+      setStoresByOffice([]);
+      setLoadingOffices(false);
       console.log('[PurchaseRequestPage] User and office data loaded:', { userId: userData?.id, office: officeData });
     } catch (error) {
       console.error('Error loading user and office:', error);
+      setLoadingOffices(false);
     }
   };
 
-  const fetchStoresForOffice = async (officeId) => {
-    try {
-      console.log('[PurchaseRequestPage] Calling API to fetch stores for officeId:', officeId);
-      const response = await purchaseRequestService.getStoresByOffice(officeId);
-      console.log('[PurchaseRequestPage] API Response for stores:', response);
-      
-      const storesArray = Array.isArray(response) ? response : response?.data || [];
-      setStoresByOffice(storesArray);
-      console.log('[PurchaseRequestPage] Stores state updated with:', storesArray);
-      
-      // Auto-select if only one store
-      if (storesArray?.length === 1) {
-        console.log('[PurchaseRequestPage] Only 1 store found, auto-selecting:', storesArray[0].id);
-        setPurchaseFormData(prev => ({
-          ...prev,
-          storeId: storesArray[0].id
-        }));
-      } else if (storesArray?.length > 1) {
-        console.log('[PurchaseRequestPage] Multiple stores found:', storesArray.length);
-      } else {
-        console.warn('[PurchaseRequestPage] No stores found for office:', officeId);
-      }
-    } catch (error) {
-      console.error('Error fetching stores for office:', error);
-      console.error('Error details:', error.message, error.response);
-      setStoresByOffice([]);
-      toast.error('Failed to load stores for your office');
-    }
+  const fetchRequests = () => {
+    setLoading(true);
+    setRequests([]);
+    setTotalItems(0);
+    setTotalPages(0);
+    setLoading(false);
   };
 
-  const fetchAllStores = async () => {
-    try {
-      console.log('[PurchaseRequestPage] Calling API to fetch all organization stores');
-      const response = await storeService.fetchStores();
-      console.log('[PurchaseRequestPage] API Response for all stores:', response);
-      
-      const storesArray = Array.isArray(response) ? response : response?.data || [];
-      setStoresByOffice(storesArray);
-      console.log('[PurchaseRequestPage] All stores loaded (admin view):', storesArray);
-      
-      // Auto-select if only one store
-      if (storesArray?.length === 1) {
-        console.log('[PurchaseRequestPage] Only 1 store found, auto-selecting:', storesArray[0].id);
-        setPurchaseFormData(prev => ({
-          ...prev,
-          storeId: storesArray[0].id
-        }));
-      } else if (storesArray?.length > 1) {
-        console.log('[PurchaseRequestPage] Multiple stores available for admin:', storesArray.length);
-      } else {
-        console.warn('[PurchaseRequestPage] No stores found in organization');
-      }
-    } catch (error) {
-      console.error('Error fetching all stores:', error);
-      console.error('Error details:', error.message, error.response);
-      setStoresByOffice([]);
-      toast.error('Failed to load stores');
-    }
+  const fetchStores = () => {
+    setStores([]);
+    setStoresByOffice([]);
   };
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const response = await purchaseRequestService.fetchPurchaseRequests({ page: currentPage, limit: itemsPerPage });
-      setRequests(response.data || []);
-      setTotalItems(response.total || 0);
-      setTotalPages(response.totalPages || 0);
-    } catch (error) {
-      console.error('Error fetching purchase requests:', error);
-      toast.error('Failed to fetch purchase requests. Please try again.');
-      setRequests([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStores = async () => {
-    try {
-      const response = await storeService.fetchStores();
-      setStores(response || []);
-    } catch (error) {
-      console.error('Error fetching stores:', error);
-    }
-  };
-
-  const fetchItems = async () => {
-    try {
-      const response = await itemService.fetchItems(1, 100);
-      setItems(response.data || []);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
+  const fetchItems = () => {
+    setItems([]);
   };
 
   const filteredRequests = requests.filter(req =>
@@ -251,47 +138,23 @@ const PurchaseRequestPage = () => {
     setDeleteModal({ isOpen: true, requestId });
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     const { requestId } = deleteModal;
-    
-    try {
-      setDeleting(requestId);
-      await purchaseRequestService.deletePurchaseRequest(requestId);
-      toast.success('Purchase request deleted successfully');
-      fetchRequests();
-      setDeleteModal({ isOpen: false, requestId: null });
-    } catch (error) {
-      console.error('Error deleting purchase request:', error);
-      toast.error('Failed to delete purchase request. Please try again.');
-    } finally {
-      setDeleting(null);
-    }
+
+    setDeleting(requestId);
+    toast.error('Delete is unavailable until APIs are implemented.');
+    setDeleteModal({ isOpen: false, requestId: null });
+    setDeleting(null);
   };
 
   const handleCancelDelete = () => {
     setDeleteModal({ isOpen: false, requestId: null });
   };
 
-  const handleApprove = async (requestId, currentStatus) => {
-    try {
-      setApproving(requestId);
-      if (currentStatus === 'SUBMITTED') {
-        await purchaseRequestService.approvePurchaseRequest(requestId);
-        toast.success('Purchase request approved');
-      } else if (currentStatus === 'APPROVED') {
-        await purchaseRequestService.rejectPurchaseRequest(requestId, { reason: 'Manual rejection' });
-        toast.success('Purchase request rejected');
-      } else {
-        await purchaseRequestService.submitPurchaseRequest(requestId);
-        toast.success('Purchase request submitted');
-      }
-      fetchRequests();
-    } catch (error) {
-      console.error('Error updating purchase request:', error);
-      toast.error('Failed to update purchase request. Please try again.');
-    } finally {
-      setApproving(null);
-    }
+  const handleApprove = (requestId) => {
+    setApproving(requestId);
+    toast.error('Approval workflow is unavailable until APIs are implemented.');
+    setApproving(null);
   };
 
   const [selectedRows, setSelectedRows] = useState(new Set());
@@ -394,49 +257,10 @@ const PurchaseRequestPage = () => {
     toast.success('Item removed from request');
   };
 
-  const handleSubmitPurchaseRequest = async () => {
-    if (!purchaseFormData.officeId) {
-      toast.error('Please select an office');
-      return;
-    }
-    if (!purchaseFormData.storeId) {
-      toast.error('Please select a store');
-      return;
-    }
-    if (purchaseRequestItems.length === 0) {
-      toast.error('Please add at least one item');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      // Build PR data with all required fields
-      const prData = {
-        officeId: purchaseFormData.officeId, // Use officeId from form
-        storeId: purchaseFormData.storeId, // Include storeId
-        requiredDate: new Date().toISOString().split('T')[0],
-        items: purchaseRequestItems.map(item => ({
-          itemId: item.itemId?.toString(),
-          itemSku: item.itemSku,
-          itemName: item.itemName,
-          unitOfMeasurement: item.unitOfMeasurement,
-          quantity: parseInt(item.quantity, 10) || 1
-        }))
-      };
-
-      console.log('[PurchaseRequestPage] Submitting PR with data:', prData);
-      await purchaseRequestService.createPurchaseRequest(prData);
-      toast.success('Purchase request created successfully');
-      handleClosePurchaseModal();
-      fetchRequests();
-    } catch (error) {
-      console.error('Error submitting purchase request:', error);
-      const errorMessage = error.message || 'Failed to create purchase request. Please try again.';
-      toast.error(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSubmitPurchaseRequest = () => {
+    setSubmitting(true);
+    toast.error('Submission is unavailable until APIs are implemented.');
+    setSubmitting(false);
   };
 
   return (

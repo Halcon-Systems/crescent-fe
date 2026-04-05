@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, X, Minus, Loader, AlertCircle, CheckCircle } from 'lucide-react';
-import { grnService, purchaseOrderService, itemService, storeService, vendorService } from '@/services/inventory';
 
 const ReceiveGRNPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -50,159 +49,34 @@ const ReceiveGRNPage = () => {
     fetchItems();
     fetchStores();
     fetchVendors();
-  }, [currentPage, itemsPerPage]);
+  }, []);
 
-  const fetchGrns = async () => {
-    try {
-      setLoading(true);
-      console.log('[ReceiveGRNPage.fetchGrns] Starting GRN fetch with page:', currentPage, 'limit:', itemsPerPage);
-      
-      const response = await grnService.fetchGrns({ page: currentPage, limit: itemsPerPage });
-      console.log('[ReceiveGRNPage.fetchGrns] Full response:', response);
-      
-      // Handle wrapped response from TransformInterceptor
-      // Response structure: { status, message, data: { data: [...], total, page, limit, totalPages } }
-      const paginatedData = response?.data;
-      console.log('[ReceiveGRNPage.fetchGrns] Paginated data:', paginatedData);
-      
-      let grnsList = [];
-      let totalItems = 0;
-      let totalPages = 0;
-      
-      if (paginatedData && typeof paginatedData === 'object') {
-        // If paginatedData has a 'data' property (it's the paginated response)
-        if (Array.isArray(paginatedData.data)) {
-          grnsList = paginatedData.data;
-          totalItems = paginatedData.total || 0;
-          totalPages = paginatedData.totalPages || 0;
-          console.log(`[ReceiveGRNPage.fetchGrns] Success: Found ${grnsList.length} GRNs`);
-        }
-        // If paginatedData itself is an array
-        else if (Array.isArray(paginatedData)) {
-          grnsList = paginatedData;
-          totalItems = paginatedData.length;
-          totalPages = 1;
-          console.log(`[ReceiveGRNPage.fetchGrns] Success: Found ${grnsList.length} GRNs (direct array)`);
-        }
-      }
-      // Fallback: if response itself is an array
-      else if (Array.isArray(response)) {
-        grnsList = response;
-        totalItems = response.length;
-        totalPages = 1;
-        console.log(`[ReceiveGRNPage.fetchGrns] Success: Found ${grnsList.length} GRNs (response array)`);
-      }
-      
-      setGrns(grnsList);
-      setTotalItems(totalItems);
-      setTotalPages(totalPages);
-      
-      // Log first GRN structure to understand field names from backend
-      if (grnsList.length > 0) {
-        console.log('[ReceiveGRNPage.fetchGrns] First GRN full structure:', JSON.stringify(grnsList[0], null, 2));
-        if (grnsList[0].items && grnsList[0].items.length > 0) {
-          console.log('[ReceiveGRNPage.fetchGrns] First item structure:', JSON.stringify(grnsList[0].items[0], null, 2));
-        }
-      } else {
-        console.warn('[ReceiveGRNPage.fetchGrns] No GRNs found in response');
-      }
-    } catch (error) {
-      console.error('[ReceiveGRNPage.fetchGrns] Error fetching GRNs:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      toast.error('Failed to fetch GRNs. Please try again.');
-      setGrns([]);
-      setTotalItems(0);
-      setTotalPages(0);
-    } finally {
-      setLoading(false);
-    }
+  const fetchGrns = () => {
+    setLoading(true);
+    setGrns([]);
+    setTotalItems(0);
+    setTotalPages(0);
+    setLoading(false);
   };
 
-  const fetchPurchaseOrders = async () => {
-    try {
-      console.log('[ReceiveGRNPage.fetchPurchaseOrders] Starting PO fetch');
-      setLoadingPOs(true);
-      const response = await purchaseOrderService.fetchPurchaseOrders({ page: 1, limit: 100 });
-      console.log('[ReceiveGRNPage.fetchPurchaseOrders] Response received:', response);
-      
-      // Extract POs array from paginated response
-      const posArray = response?.data || response || [];
-      console.log('[ReceiveGRNPage.fetchPurchaseOrders] POs array:', posArray);
-      
-      if (Array.isArray(posArray)) {
-        console.log(`[ReceiveGRNPage.fetchPurchaseOrders] Successfully loaded ${posArray.length} POs`);
-        setPurchaseOrders(posArray);
-      } else {
-        console.error('[ReceiveGRNPage.fetchPurchaseOrders] POs array is not valid:', posArray);
-        setPurchaseOrders([]);
-        toast.error('Failed to load purchase orders - invalid data format');
-      }
-    } catch (error) {
-      console.error('[ReceiveGRNPage.fetchPurchaseOrders] Error fetching POs:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
-      setPurchaseOrders([]);
-      toast.error(`Failed to load purchase orders: ${error.message}`);
-    } finally {
-      setLoadingPOs(false);
-    }
+  const fetchPurchaseOrders = () => {
+    setLoadingPOs(true);
+    setPurchaseOrders([]);
+    setLoadingPOs(false);
   };
 
-  const fetchItems = async () => {
-    try {
-      const response = await itemService.fetchItems(1, 100);
-      setItems(response.data || []);
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    }
+  const fetchItems = () => {
+    setItems([]);
   };
 
-  const fetchStores = async () => {
-    try {
-      const response = await storeService.fetchStores();
-      setStores(response || []);
-    } catch (error) {
-      console.error('Error fetching stores:', error);
-    }
+  const fetchStores = () => {
+    setStores([]);
   };
 
-  const fetchVendors = async () => {
-    try {
-      console.log('[ReceiveGRNPage.fetchVendors] Starting vendor fetch');
-      setLoadingVendors(true);
-      const response = await vendorService.fetchVendors(1, 100);
-      console.log('[ReceiveGRNPage.fetchVendors] Response received:', response);
-      
-      // Extract vendors array from paginated response
-      const vendorsArray = response?.data || response || [];
-      console.log('[ReceiveGRNPage.fetchVendors] Vendors array:', vendorsArray);
-      
-      if (Array.isArray(vendorsArray)) {
-        console.log(`[ReceiveGRNPage.fetchVendors] Successfully loaded ${vendorsArray.length} vendors`);
-        setVendors(vendorsArray);
-      } else {
-        console.error('[ReceiveGRNPage.fetchVendors] Vendors array is not valid:', vendorsArray);
-        setVendors([]);
-        toast.error('Failed to load vendors - invalid data format');
-      }
-    } catch (error) {
-      console.error('[ReceiveGRNPage.fetchVendors] Error fetching vendors:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
-      setVendors([]);
-      toast.error(`Failed to load vendors: ${error.message}`);
-    } finally {
-      setLoadingVendors(false);
-    }
+  const fetchVendors = () => {
+    setLoadingVendors(true);
+    setVendors([]);
+    setLoadingVendors(false);
   };
 
   const filteredGrns = (Array.isArray(grns) ? grns : []).filter(grn =>
@@ -250,66 +124,25 @@ const ReceiveGRNPage = () => {
     setDeleteConfirm({ id: grnId, grnNumber });
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!deleteConfirm) return;
 
     const { id: grnId, grnNumber } = deleteConfirm;
 
-    try {
-      setDeleting(grnId);
-      console.log('[ReceiveGRNPage.confirmDelete] Deleting GRN:', grnId);
-      
-      await grnService.deleteGrn(grnId);
-      
-      toast.success(`GRN ${grnNumber} deleted successfully`);
-      console.log('[ReceiveGRNPage.confirmDelete] Delete successful for GRN:', grnId);
-      setDeleteConfirm(null);
-      fetchGrns();
-    } catch (error) {
-      console.error('[ReceiveGRNPage.confirmDelete] Error deleting GRN:', error);
-      toast.error(error.message || 'Failed to delete GRN. Please try again.');
-    } finally {
-      setDeleting(null);
-    }
+    setDeleting(grnId);
+    toast.error(`Delete is unavailable until APIs are implemented (${grnNumber}).`);
+    setDeleteConfirm(null);
+    setDeleting(null);
   };
 
   const cancelDelete = () => {
     setDeleteConfirm(null);
   };
 
-  const handleReceiveGrn = async (grnId, grnItems) => {
-    try {
-      setReceiving(grnId);
-      
-      console.log('[ReceiveGRNPage.handleReceiveGrn] Starting receive for GRN:', grnId);
-      console.log('[ReceiveGRNPage.handleReceiveGrn] GRN Items:', grnItems);
-      
-      // Prepare items for quality inspection - all items accepted by default
-      // API expects: grnItemId, quantityAccepted, quantityRejected, conditionStatus
-      const inspectionItems = grnItems.map(item => ({
-        grnItemId: item.id || item.grnItemId,  // Use the GRN item's own ID, not the item reference ID
-        quantityAccepted: item.quantityReceived || item.quantityOrdered || 0,
-        quantityRejected: 0,
-        conditionStatus: item.conditionStatus || 'GOOD'
-      }));
-
-      console.log('[ReceiveGRNPage.handleReceiveGrn] Inspection items prepared:', inspectionItems);
-
-      // Call the 7-step atomic transaction
-      const received = await grnService.receiveGrn(grnId, {
-        items: inspectionItems
-      });
-
-      console.log('[ReceiveGRNPage.handleReceiveGrn] Receive successful:', received);
-      
-      toast.success('GRN received successfully! 7-step transaction completed.');
-      fetchGrns();
-    } catch (error) {
-      console.error('[ReceiveGRNPage.handleReceiveGrn] Error receiving GRN:', error);
-      toast.error(error.message || 'Failed to receive GRN. Please try again.');
-    } finally {
-      setReceiving(null);
-    }
+  const handleReceiveGrn = (grnId) => {
+    setReceiving(grnId);
+    toast.error('Receive workflow is unavailable until APIs are implemented.');
+    setReceiving(null);
   };
 
   const toggleRowSelection = (id) => {
@@ -372,41 +205,8 @@ const ReceiveGRNPage = () => {
     });
   };
 
-  const fetchPODetails = async (poId) => {
-    try {
-      console.log('[ReceiveGRNPage.fetchPODetails] Fetching PO details for:', poId);
-      const response = await purchaseOrderService.fetchPurchaseOrderById(poId);
-      console.log('[ReceiveGRNPage.fetchPODetails] Full response:', response);
-      
-      // Handle wrapped response from TransformInterceptor
-      const poDetails = response?.data || response;
-      console.log('[ReceiveGRNPage.fetchPODetails] PO Details extracted:', poDetails);
-      
-      if (!poDetails || !poDetails.items) {
-        throw new Error('PO details or items not found in response');
-      }
-      
-      // Store PO details with items that include quantityOrdered and unitPrice
-      setSelectedPO(poDetails);
-      console.log('[ReceiveGRNPage.fetchPODetails] Successfully stored PO with items:', poDetails.items.length);
-      
-      // Auto-populate vendor from PO if available
-      if (poDetails?.vendorId && !grnFormData.vendorId) {
-        console.log('[ReceiveGRNPage.fetchPODetails] Auto-populating vendor:', poDetails.vendorId);
-        setGrnFormData(prev => ({
-          ...prev,
-          vendorId: poDetails.vendorId
-        }));
-      }
-    } catch (error) {
-      console.error('[ReceiveGRNPage.fetchPODetails] Error fetching PO details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      setSelectedPO(null);
-      toast.error(`Failed to load PO details: ${error.message}`);
-    }
+  const fetchPODetails = () => {
+    setSelectedPO(null);
   };
 
   const handleGrnFormChange = (e) => {
@@ -510,89 +310,10 @@ const ReceiveGRNPage = () => {
     toast.success('Item removed from GRN');
   };
 
-  const handleSubmitGRN = async () => {
-    if (!grnFormData.poId) {
-      toast.error('Please select a purchase order');
-      return;
-    }
-    if (!grnFormData.storeId) {
-      toast.error('Please select a store');
-      return;
-    }
-    if (!grnFormData.vendorId) {
-      toast.error('Please select a vendor');
-      return;
-    }
-    if (grnItems.length === 0) {
-      toast.error('Please add at least one item');
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      // For create: Backend expects: poId, storeId, vendorId, grnType, items
-      // For update: Only update certain fields, keep grnItemId intact
-      const grnData = {
-        poId: grnFormData.poId,
-        storeId: grnFormData.storeId,
-        vendorId: grnFormData.vendorId,
-        grnType: grnFormData.grnType,
-        items: grnItems.map(item => {
-          // For existing GRN items, include their ID; for new items, omit it
-          const itemData = {
-            itemId: item.itemId,
-            quantityReceived: item.quantityReceived,
-            unitPrice: item.unitPrice?.toString?.() || item.unitPrice?.toString() || item.unitPrice,
-            conditionStatus: item.conditionStatus,
-            quantityOrdered: item.quantityOrdered
-          };
-          
-          // Include poItemId if updating existing items
-          if (item.poItemId) {
-            itemData.poItemId = item.poItemId;
-          }
-          
-          return itemData;
-        })
-      };
-
-      let response;
-      if (editingGrnId) {
-        // For editing, send only updatable fields - items are read-only after creation
-        const updateData = {
-          vendorId: grnFormData.vendorId,
-          storeId: grnFormData.storeId,
-          grnType: grnFormData.grnType
-        };
-        
-        console.log('[ReceiveGRNPage.handleSubmitGRN] Updating GRN ID:', editingGrnId);
-        console.log('[ReceiveGRNPage.handleSubmitGRN] Update payload:', JSON.stringify(updateData, null, 2));
-        
-        response = await grnService.updateGrn(editingGrnId, updateData);
-        console.log('[ReceiveGRNPage.handleSubmitGRN] GRN updated successfully:', response);
-        toast.success('GRN updated successfully');
-      } else {
-        // Create new GRN
-        console.log('[ReceiveGRNPage.handleSubmitGRN] Creating new GRN with payload:', JSON.stringify(grnData, null, 2));
-        response = await grnService.createGrn(grnData);
-        console.log('[ReceiveGRNPage.handleSubmitGRN] GRN created successfully:', response);
-        toast.success('GRN created successfully');
-      }
-      
-      handleCloseModal();
-      fetchGrns();
-    } catch (error) {
-      console.error('[ReceiveGRNPage.handleSubmitGRN] Error submitting GRN:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
-      const errorMessage = error.message || 'Failed to submit GRN. Please try again.';
-      toast.error(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
+  const handleSubmitGRN = () => {
+    setSubmitting(true);
+    toast.error('Submission is unavailable until APIs are implemented.');
+    setSubmitting(false);
   };
 
   return (

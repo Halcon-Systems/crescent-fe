@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { issuanceService, stockTransferService } from '@/services/inventory';
 
 const ReportsPage = () => {
     const [data, setData] = useState([]);
@@ -15,70 +14,10 @@ const ReportsPage = () => {
         loadData();
     }, []);
 
-    const loadData = async () => {
+    const loadData = () => {
         setIsLoading(true);
-        try {
-            console.log('[ReportsPage.loadData] Starting to load issuances and transfers...');
-            
-            // Fetch issuances and transfers
-            const issuancesResponse = await issuanceService.fetchIssuances({ page: 1, limit: 100 });
-            const transfersResponse = await stockTransferService.fetchStockTransfers({ page: 1, limit: 100 });
-            
-            console.log('[ReportsPage.loadData] Issuances response:', issuancesResponse);
-            console.log('[ReportsPage.loadData] Transfers response:', transfersResponse);
-            
-            // Extract data arrays - handle double wrapping: response.data.data
-            const issuancesData = issuancesResponse?.data || issuancesResponse;
-            const transfersData = transfersResponse?.data || transfersResponse;
-            
-            const issuances = issuancesData?.data || issuancesData || [];
-            const transfers = transfersData?.data || transfersData || [];
-            
-            console.log('[ReportsPage.loadData] Extracted issuances:', issuances);
-            console.log('[ReportsPage.loadData] Extracted transfers:', transfers);
-            
-            const formattedData = [
-                ...(Array.isArray(issuances) ? issuances : []).map((item, idx) => {
-                    // Get first item from issuance items array
-                    const firstItem = item.items?.[0];
-                    return {
-                        id: item.id,
-                        issueNo: item.issueNumber || `ISS-${idx + 1}`,
-                        store: item.store?.name || item.storeName || 'Store',
-                        serviceNo: item.guard?.serviceNumber || item.guardServiceNo || '-',
-                        name: item.guard?.fullName || item.guardName || item.guardFullName || 'Guard Name',
-                        itemSKU: firstItem?.item?.sku || firstItem?.sku || 'SKU',
-                        itemGroup: firstItem?.item?.groupId || firstItem?.group || 'Uniform',
-                        category: firstItem?.item?.categoryId || firstItem?.condition || 'New',
-                        status: item.status || 'ISSUED',
-                        type: 'Issuance',
-                        quantity: firstItem?.quantity || 1,
-                    };
-                }),
-                ...(Array.isArray(transfers) ? transfers : []).map((item, idx) => ({
-                    id: item.id,
-                    issueNo: item.transferNumber || `TRANS-${idx + 1}`,
-                    store: item.fromStore?.name || 'Store',
-                    serviceNo: item.toStore?.name || '-',
-                    name: 'Transfer',
-                    itemSKU: item.items?.[0]?.item?.sku || item.items?.[0]?.sku || 'SKU',
-                    itemGroup: item.items?.[0]?.item?.groupId || item.items?.[0]?.group || 'Uniform',
-                    category: 'Transfer',
-                    status: item.status || 'Pending',
-                    type: 'Transfer',
-                    quantity: item.items?.[0]?.quantity || 1,
-                }))
-            ];
-            
-            console.log('[ReportsPage.loadData] Formatted data:', formattedData);
-            setData(formattedData);
-        } catch (error) {
-            console.error('[ReportsPage.loadData] Error loading reports:', error);
-            toast.error('Failed to load reports');
-            setData([]);
-        } finally {
-            setIsLoading(false);
-        }
+        setData([]);
+        setIsLoading(false);
     };
 
     // Filter data based on search
