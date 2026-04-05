@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, X, Minus, Loader } from 'lucide-react';
 import { purchaseRequestService, itemService, storeService } from '@/services/inventory';
-import officeService from '@/services/officeService';
+import officeService from '@/services/office.service';
 
 const PurchaseRequestPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
