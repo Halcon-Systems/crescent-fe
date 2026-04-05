@@ -1,9 +1,9 @@
 import { store } from "@/redux/store";
-import { signOut } from "@/redux/slices/userSlice";
+import { loginSuccess, signOut } from "@/redux/slices/userSlice";
 import axios from "axios";
-import { getStoredAgentIp } from "@/lib/AgentIpManager";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://crescent-be.vercel.app/'
+const AUTH_BASE = '/api/v1/auth';
 
 export const publicRequest = axios.create({
     baseURL: BASE_URL
@@ -16,34 +16,66 @@ export const userRequest = axios.create({
         'Content-Type': 'application/json'
     }
 })
-
-// Get token from Redux state
 const getTokenFromState = () => {
     const state = store.getState();
-    // First try the new token location
     const token = state.user.token;
     if (token) return token;
-    
-    // Fallback to the old location if needed
-    return state.user.currentUser?.data?.token;
-};
+    const legacyToken = state.user.currentUser?.data?.token;
+    if (legacyToken) return legacyToken;
+    try {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('accessToken');
+        }
+    } catch (error) {
+        console.error('[RequestMethods] Failed to read accessToken from localStorage:', error);
+    }
 
-// Helper to check if endpoint is biometric-related
-const isBiometricEndpoint = (url) => {
-    return url && url.includes('/biometric/');
+    return null;
 };
-
-// Helper to log Redux auth state
-const logReduxAuthState = () => {
+const getRefreshTokenFromState = () => {
     const state = store.getState();
-    console.log('[RequestMethods] Redux auth state:', {
-        hasToken: !!state.user.token,
-        hasCurrentUser: !!state.user.currentUser,
-        tokenPreview: state.user.token ? state.user.token.substring(0, 20) + '...' : 'none'
-    });
+    const refreshToken = state.user.refreshToken;
+    if (refreshToken) return refreshToken;
+
+    const legacyRefreshToken = state.user.currentUser?.data?.refreshToken;
+    if (legacyRefreshToken) return legacyRefreshToken;
+
+    try {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('refreshToken');
+        }
+    } catch (error) {
+        console.error('[RequestMethods] Failed to read refreshToken from localStorage:', error);
+    }
+
+    return null;
 };
 
-// Request interceptor - Add token to headers
+const normalizeAuthPayload = (data) => {
+    return {
+        token: data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token || null,
+        refreshToken: data?.refreshToken || data?.data?.refreshToken || null,
+        user: data?.user || data?.data?.user || data?.profile || data?.data?.profile || null,
+    };
+};
+
+let isRefreshing = false;
+let refreshQueue = [];
+
+const resolveRefreshQueue = (error, token) => {
+    refreshQueue.forEach((promise) => {
+        if (error) {
+            promise.reject(error);
+        } else {
+            promise.resolve(token);
+        }
+    });
+    refreshQueue = [];
+};
+
+const isAuthEndpoint = (url = '') => {
+    return url.includes(`${AUTH_BASE}/login`) || url.includes(`${AUTH_BASE}/register`) || url.includes(`${AUTH_BASE}/refresh`);
+};
 userRequest.interceptors.request.use(
     (config) => {
         const token = getTokenFromState();
@@ -54,25 +86,6 @@ userRequest.interceptors.request.use(
             console.log('[RequestMethods] Token preview:', token.substring(0, 20) + '...');
         }
         
-        // Handle biometric requests
-        if (isBiometricEndpoint(config.url)) {
-            console.log('[RequestMethods] Biometric request detected');
-            console.log('[RequestMethods] Request body:', config.data, 'Type:', typeof config.data);
-            console.log('[RequestMethods] Field types:', {
-                deviceIndex: typeof config.data?.deviceIndex,
-                maxRetries: typeof config.data?.maxRetries,
-                timeout: typeof config.data?.timeout,
-            });
-            if (typeof config.data === 'string') {
-                console.warn('[RequestMethods] WARNING: Body is stringified - possible double-serialization');
-            }
-            logReduxAuthState();
-            
-            // Note: Agent IP is no longer needed in header
-            // Backend now fetches agent IP from database using user's current office
-            console.log('[RequestMethods] Backend will fetch agent IP from database');
-        }
-
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -81,45 +94,80 @@ userRequest.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
-
-// Response interceptor - Handle auth errors
 userRequest.interceptors.response.use(
     (response) => {
-        // Log biometric responses for debugging
-        if (isBiometricEndpoint(response.config?.url)) {
-            console.log('[RequestMethods] Biometric response:', response.status, response.data);
-        }
         return response;
     },
-    (error) => {
-        // Safe error logging without sensitive data
+    async (error) => {
+        const originalRequest = error.config;
         const safeErrorDetails = {
             status: error.response?.status,
-            endpoint: error.config?.url?.split('?')[0], // Remove query params
+            endpoint: error.config?.url?.split('?')[0], 
             errorType: error.response?.data?.error || 'Unknown Error'
         };
-        
         console.error('[RequestMethods] Request failed:', safeErrorDetails);
-        if (isBiometricEndpoint(error.config?.url)) {
-            console.error('[RequestMethods] Biometric request failed - this may indicate agent connectivity issues');
-        }
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint(originalRequest.url)) {
+            const refreshToken = getRefreshTokenFromState();
+            if (!refreshToken) {
+                store.dispatch(signOut());
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
+                return Promise.reject(error);
+            }
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    refreshQueue.push({ resolve, reject });
+                }).then((newToken) => {
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                    return userRequest(originalRequest);
+                });
+            }
 
-        // Handle specific error cases
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                const refreshResponse = await publicRequest.post(`${AUTH_BASE}/refresh`, { refreshToken });
+                const refreshData = refreshResponse.data?.data || refreshResponse.data;
+                const { token, refreshToken: newRefreshToken, user } = normalizeAuthPayload(refreshData);
+
+                if (!token && !newRefreshToken && !user) {
+                    throw new Error('Refresh response missing auth data');
+                }
+
+                store.dispatch(loginSuccess({ user, token, refreshToken: newRefreshToken }));
+                resolveRefreshQueue(null, token);
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                return userRequest(originalRequest);
+            } catch (refreshError) {
+                resolveRefreshQueue(refreshError, null);
+                store.dispatch(signOut());
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
         switch (error.response?.status) {
             case 401:
                 console.error('Authentication failed:', safeErrorDetails);
                 store.dispatch(signOut());
-                window.location.href = '/login';
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
                 break;
             case 403:
                 console.error('Permission denied:', safeErrorDetails);
-                // Use your toast notification system here
                 if (typeof window !== 'undefined' && window.toast) {
                     window.toast.error('Access denied');
                 }
-                // Only redirect if not on a public page
-                if (!window.location.pathname.startsWith('/login')) {
-                    window.location.href = '/client-dashboard';
+                if (typeof window !== 'undefined') {
+                    if (!window.location.pathname.startsWith('/login')) {
+                        window.location.href = '/client-dashboard';
+                    }
                 }
                 break;
             case 500:
@@ -129,15 +177,9 @@ userRequest.interceptors.response.use(
                 }
                 break;
             case 503:
-                // Biometric-specific handling for service unavailable
-                if (isBiometricEndpoint(error.config?.url)) {
-                    console.error('Biometric agent service unavailable:', safeErrorDetails);
-                    // Don't redirect or show generic toast - let component handle it
-                } else {
-                    console.error('Service unavailable:', safeErrorDetails);
-                    if (typeof window !== 'undefined' && window.toast) {
-                        window.toast.error('Service temporarily unavailable. Please try again later.');
-                    }
+                console.error('Service unavailable:', safeErrorDetails);
+                if (typeof window !== 'undefined' && window.toast) {
+                    window.toast.error('Service temporarily unavailable. Please try again later.');
                 }
                 break;
             default:
@@ -146,8 +188,6 @@ userRequest.interceptors.response.use(
                     window.toast.error('Request failed');
                 }
         }
-
-        // Development-only logging (non-sensitive)
         if (process.env.NODE_ENV === 'development') {
             console.debug('Development error context:', {
                 endpoint: safeErrorDetails.endpoint,

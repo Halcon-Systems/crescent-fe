@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   User,
   LayoutDashboard,
@@ -17,15 +17,28 @@ import {
   Menu,
   X,
   UtilityPole,
+  LogOut,
 } from "lucide-react";
 import LogoSVG from "@/components/svg/logoSVG";
 import Link from "next/link";
+import { useSelector } from "react-redux";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const [dashboardOpen, setDashboardOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const refreshToken = useSelector((state) => state.user?.refreshToken);
+  const { mutateAsync: logoutUser, isPending: isLoggingOut } = useLogout({
+    onSuccess: () => {
+      router.push('/login');
+    },
+    onError: () => {
+      router.push('/login');
+    },
+  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -71,6 +84,33 @@ const Sidebar = () => {
         <span className="flex-1 font-medium">{label}</span>
       </Link>
     );
+  };
+
+  const getRefreshToken = () => {
+    if (refreshToken) return refreshToken;
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('refreshToken');
+      }
+    } catch (error) {
+      console.error('[Sidebar] Failed to read refreshToken from localStorage:', error);
+    }
+    return null;
+  };
+
+  const handleLogout = async () => {
+    const token = getRefreshToken();
+    try {
+      if (token) {
+        await logoutUser({ refreshToken: token });
+      } else {
+        await logoutUser({});
+      }
+    } finally {
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
+    }
   };
 
   return (
@@ -169,6 +209,23 @@ const Sidebar = () => {
             </div>
 
           </nav>
+
+          <div className="mt-auto pt-6 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 w-full
+                ${isLoggingOut
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                }
+              `}
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="flex-1 font-medium">Logout</span>
+            </button>
+          </div>
         </div>
       </aside>
 
