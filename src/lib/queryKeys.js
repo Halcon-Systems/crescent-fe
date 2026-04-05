@@ -24,4 +24,9 @@ export const queryKeys = {
     list: (params) => ['purchase-requests', 'list', params],
     detail: (id) => ['purchase-requests', 'detail', id],
   },
+  clientCategories: {
+    all: ['client-categories'],
+    list: (params) => ['client-categories', 'list', params],
+    detail: (id) => ['client-categories', 'detail', id],
+  },
 };

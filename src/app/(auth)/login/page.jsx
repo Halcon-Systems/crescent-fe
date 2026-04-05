@@ -52,6 +52,7 @@ const SignInForm = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -180,7 +181,7 @@ const SignInForm = () => {
                         </div>
 
                         <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="relative inline-block w-10 h-5">
+                            <label htmlFor="rememberMeToggle" className="relative inline-block w-10 h-5 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     id="rememberMeToggle"
@@ -190,7 +191,7 @@ const SignInForm = () => {
                                     disabled={isLoading || isPending}
                                     className="sr-only"
                                 />
-                                <div className={`block w-10 h-5 rounded-full cursor-pointer transition-all duration-200 ${formData.rememberMe 
+                                <div className={`relative block w-10 h-5 rounded-full transition-all duration-200 ${formData.rememberMe 
                                     ? 'bg-gradient-to-r from-[#E93B77] to-[#DA1F63]' 
                                     : 'bg-gray-300'
                                 } ${(isLoading || isPending) ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -199,7 +200,7 @@ const SignInForm = () => {
                                         : 'translate-x-0 left-0.5'
                                     }`}></div>
                                 </div>
-                            </div>
+                            </label>
                             <label
                                 htmlFor="rememberMeToggle"
                                 className={`text-xs sm:text-sm text-gray-700 cursor-pointer select-none ${(isLoading || isPending) ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -211,7 +212,7 @@ const SignInForm = () => {
                         <button
                             type="submit"
                             disabled={isLoading || isPending}
-                            className="w-full bg-gradient-to-r from-[#E93B77] to-[#DA1F63] text-white text-xs sm:text-sm font-medium py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:from-[#DA1F63] hover:to-[#E93B77] focus:outline-none focus:ring-2 sm:focus:ring-4 focus:ring-[#DC22655C] transition-all duration-300 shadow-sm sm:shadow-md hover:shadow-md sm:hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-gradient-to-r from-[#E93B77] to-[#DA1F63] text-white text-xs sm:text-sm font-medium py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:from-[#DA1F63] hover:to-[#E93B77] focus:outline-none focus:ring-2 sm:focus:ring-4 focus:ring-[#DC22655C] transition-all duration-300 shadow-sm sm:shadow-md hover:shadow-md sm:hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                         >
                             {(isLoading || isPending) && (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
