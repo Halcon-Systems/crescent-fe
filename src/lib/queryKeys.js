@@ -14,6 +14,11 @@ export const queryKeys = {
     list: (params) => ['offices', 'list', params],
     detail: (id) => ['offices', 'detail', id],
   },
+  zones: {
+    all: ['zones'],
+    list: (params) => ['zones', 'list', params],
+    detail: (id) => ['zones', 'detail', id],
+  },
   purchaseRequests: {
     all: ['purchase-requests'],
     list: (params) => ['purchase-requests', 'list', params],
