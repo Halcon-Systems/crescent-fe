@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLogin } from '@/hooks/auth/useLogin';
 import toast from 'react-hot-toast';
@@ -23,12 +24,13 @@ const SignInForm = () => {
     const router = useRouter();
     const { mutateAsync: login, isPending } = useLogin();
 
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         rememberMe: false
     });
-
+    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState('');
@@ -159,26 +161,36 @@ const SignInForm = () => {
                             )}
                         </div>
 
-                        <div>
+                        <div className="relative">
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 onBlur={(e) => validateField(e.target.name, e.target.value)}
                                 disabled={isLoading || isPending}
                                 placeholder="Enter your password"
-                                className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm rounded-lg sm:rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#E93B77]/30 transition ${errors.password
+                                className={`w-full pr-10 px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm rounded-lg sm:rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#E93B77]/30 transition ${errors.password
                                     ? "border-red-500 bg-red-50"
                                     : "border-gray-200 hover:border-gray-300"
                                     } ${(isLoading || isPending) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                             />
+                            <button
+                                type="button"
+                                tabIndex={-1}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 text-[#E93B77] focus:outline-none"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                disabled={isLoading || isPending}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                             {errors.password && (
                                 <p className="mt-1 text-xs text-red-600">
                                     {errors.password}
                                 </p>
                             )}
-                        </div>
 
                         <div className="flex items-center gap-2 sm:gap-3">
                             <label htmlFor="rememberMeToggle" className="relative inline-block w-10 h-5 cursor-pointer">
