@@ -11,6 +11,7 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 
 const AddProductsTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +19,8 @@ const AddProductsTabContent = () => {
   const [editProductName, setEditProductName] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [viewItem, setViewItem] = useState(null);
   const [localProducts, setLocalProducts] = useState([]);
@@ -66,7 +69,11 @@ const AddProductsTabContent = () => {
   }, [localProducts, isLoading, error]);
 
   const handleCreateProduct = () => {
-    if (!productName.trim()) return;
+    if (!productName.trim()) {
+      setValidationErrors(["Product Name"]);
+      setShowValidationError(true);
+      return false;
+    }
     createProduct({ productName });
   };
 
@@ -83,7 +90,12 @@ const AddProductsTabContent = () => {
   };
 
   const handleUpdateProduct = (onSuccess) => {
-    if (!editProductName.trim() || !selectedProduct) return;
+    if (!editProductName.trim()) {
+      setValidationErrors(["Product Name"]);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedProduct) return;
     updateProduct(
       { id: selectedProduct.id, payload: { productName: editProductName } },
       { onSuccess }
@@ -131,7 +143,7 @@ const AddProductsTabContent = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <FieldWrapper label="Product Name" className="text-sm">
+            <FieldWrapper label="Product Name" required className="text-sm">
               <Input
                 placeholder="Type here"
                 className="text-sm py-2"
@@ -142,7 +154,7 @@ const AddProductsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Product ID" className="text-sm">
+            <FieldWrapper label="Product ID" required className="text-sm">
               <Input
                 value="Auto"
                 readOnly
@@ -209,6 +221,13 @@ const AddProductsTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

@@ -1,13 +1,18 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const ClientContext = createContext(null);
 
 export const ClientProvider = ({ children }) => {
   const [showAddClient, setShowAddClient] = useState(false);
+  const router = useRouter();
 
-  const openAddClientForm = () => setShowAddClient(true);
+  // const openAddClientForm = () => setShowAddClient(true);
+  const openAddClientForm = () => {
+    router.push("/dashboard/sales");
+  }
   const closeAddClientForm = () => setShowAddClient(false);
 
   return (

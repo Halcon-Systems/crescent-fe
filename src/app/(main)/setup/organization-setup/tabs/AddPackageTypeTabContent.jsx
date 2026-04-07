@@ -11,6 +11,7 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 
 const PackageTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -22,6 +23,8 @@ const PackageTabContent = () => {
   const [editMinRenewalCharges, setEditMinRenewalCharges] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [viewItem, setViewItem] = useState(null);
   const [localPackages, setLocalPackages] = useState([]);
@@ -87,8 +90,21 @@ const PackageTabContent = () => {
     setEditMinRenewalCharges("");
   };
 
+  const validateCreatePackage = () => {
+    const errors = [];
+    if (!packageName.trim()) errors.push("Package Name");
+    if (!minCharges) errors.push("Min Charges");
+    if (!minRenewalCharges) errors.push("Min Renewal Charges");
+    return errors;
+  };
+
   const handleCreatePackage = () => {
-    if (!packageName.trim() || !minCharges || !minRenewalCharges) return;
+    const errors = validateCreatePackage();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createPackage({
       packageName,
       minCharges: parseFloat(minCharges),
@@ -111,9 +127,22 @@ const PackageTabContent = () => {
     setShowEditModal(true);
   };
 
+  const validateUpdatePackage = () => {
+    const errors = [];
+    if (!editPackageName.trim()) errors.push("Package Name");
+    if (!editMinCharges) errors.push("Min Charges");
+    if (!editMinRenewalCharges) errors.push("Min Renewal Charges");
+    return errors;
+  };
+
   const handleUpdatePackage = (onSuccess) => {
-    if (!editPackageName.trim() || !editMinCharges || !editMinRenewalCharges || !selectedPackage)
+    const errors = validateUpdatePackage();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
       return;
+    }
+    if (!selectedPackage) return;
     updatePackage(
       {
         id: selectedPackage.id,
@@ -164,7 +193,7 @@ const PackageTabContent = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <FieldWrapper label="Package Name" className="text-sm">
+            <FieldWrapper label="Package Name" required className="text-sm">
               <Input
                 placeholder="Enter package name"
                 className="text-sm py-2"
@@ -175,7 +204,7 @@ const PackageTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Min Charges" className="text-sm">
+            <FieldWrapper label="Min Charges" required className="text-sm">
               <Input
                 placeholder="Enter minimum charges"
                 className="text-sm py-2"
@@ -188,7 +217,7 @@ const PackageTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Min Renewal Charges" className="text-sm">
+            <FieldWrapper label="Min Renewal Charges" required className="text-sm">
               <Input
                 placeholder="Enter minimum renewal charges"
                 className="text-sm py-2"
@@ -272,6 +301,13 @@ const PackageTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

@@ -13,6 +13,7 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 
 const VendorsTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +33,8 @@ const VendorsTabContent = () => {
   const [editSecondaryMobile, setEditSecondaryMobile] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [viewItem, setViewItem] = useState(null);
   const [localVendors, setLocalVendors] = useState([]);
@@ -118,8 +121,25 @@ const VendorsTabContent = () => {
     setEditSecondaryMobile("");
   };
 
+  const validateCreateVendor = () => {
+    const errors = [];
+    if (!vendorName.trim()) errors.push("Vendor Name");
+    if (!cityId) errors.push("City");
+    if (!address.trim()) errors.push("Address");
+    if (!emailId.trim()) errors.push("Email");
+    if (!contactPerson.trim()) errors.push("Contact Person");
+    if (!primaryMobile.trim()) errors.push("Primary Mobile");
+    if (!secondaryMobile.trim()) errors.push("Secondary Mobile");
+    return errors;
+  };
+
   const handleCreateVendor = () => {
-    if (!vendorName.trim() || !cityId) return;
+    const errors = validateCreateVendor();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createVendor({
       vendorName,
       cityId: parseInt(cityId),
@@ -151,8 +171,25 @@ const VendorsTabContent = () => {
     setShowEditModal(true);
   };
 
+  const validateUpdateVendor = () => {
+    const errors = [];
+    if (!editVendorName.trim()) errors.push("Vendor Name");
+    if (!editAddress.trim()) errors.push("Address");
+    if (!editEmailId.trim()) errors.push("Email");
+    if (!editContactPerson.trim()) errors.push("Contact Person");
+    if (!editPrimaryMobile.trim()) errors.push("Primary Mobile");
+    if (!editSecondaryMobile.trim()) errors.push("Secondary Mobile");
+    return errors;
+  };
+
   const handleUpdateVendor = (onSuccess) => {
-    if (!editVendorName.trim() || !selectedVendor) return;
+    const errors = validateUpdateVendor();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedVendor) return;
     updateVendor(
       {
         id: selectedVendor.id,
@@ -207,7 +244,7 @@ const VendorsTabContent = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <FieldWrapper label="Vendor Name" className="text-sm">
+            <FieldWrapper label="Vendor Name" required className="text-sm">
               <Input
                 placeholder="Enter vendor name"
                 className="text-sm py-2"
@@ -218,7 +255,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="City" className="text-sm">
+            <FieldWrapper label="City" required className="text-sm">
               <Select
                 value={cityId}
                 onChange={(e) => setCityId(e.target.value)}
@@ -229,7 +266,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Address" className="text-sm">
+            <FieldWrapper label="Address" required className="text-sm">
               <Input
                 placeholder="Enter address"
                 className="text-sm py-2"
@@ -240,7 +277,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Email" className="text-sm">
+            <FieldWrapper label="Email" required className="text-sm">
               <Input
                 placeholder="Enter email"
                 className="text-sm py-2"
@@ -251,7 +288,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Contact Person" className="text-sm">
+            <FieldWrapper label="Contact Person" required className="text-sm">
               <Input
                 placeholder="Enter contact person name"
                 className="text-sm py-2"
@@ -262,7 +299,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Primary Mobile" className="text-sm">
+            <FieldWrapper label="Primary Mobile" required className="text-sm">
               <Input
                 placeholder="Enter primary mobile"
                 className="text-sm py-2"
@@ -273,7 +310,7 @@ const VendorsTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Secondary Mobile" className="text-sm">
+            <FieldWrapper label="Secondary Mobile" required className="text-sm">
               <Input
                 placeholder="Enter secondary mobile"
                 className="text-sm py-2"
@@ -359,6 +396,13 @@ const VendorsTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

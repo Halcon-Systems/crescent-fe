@@ -9,6 +9,7 @@ import { useDeleteBankAccount } from "@/hooks/bank-account/useDeleteBankAccount"
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -38,6 +39,8 @@ const AddBankAccountTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [viewItem, setViewItem] = useState(null);
 
@@ -158,8 +161,23 @@ const AddBankAccountTabContent = () => {
     setEditBranch("");
   };
 
+  const validateCreateAccount = () => {
+    const errors = [];
+    if (!bankId) errors.push("Bank Name");
+    if (!accountNo.trim()) errors.push("Account No.");
+    if (!iban.trim()) errors.push("IBAN");
+    if (!branchCode.trim()) errors.push("Branch Code");
+    if (!branch.trim()) errors.push("Branch");
+    return errors;
+  };
+
   const handleCreateAccount = () => {
-    if (!bankId || !accountNo.trim()) return;
+    const errors = validateCreateAccount();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createAccount({
       bankId: parseInt(bankId),
       accountNo,
@@ -168,6 +186,39 @@ const AddBankAccountTabContent = () => {
       branch,
       isActive: true,
     });
+  };
+
+  const validateUpdateAccount = () => {
+    const errors = [];
+    if (!editBankId) errors.push("Bank Name");
+    if (!editAccountNo.trim()) errors.push("Account No.");
+    if (!editIban.trim()) errors.push("IBAN");
+    if (!editBranchCode.trim()) errors.push("Branch Code");
+    if (!editBranch.trim()) errors.push("Branch");
+    return errors;
+  };
+
+  const handleUpdateAccount = (onSuccess) => {
+    const errors = validateUpdateAccount();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedAccount || !editBankId) return;
+    updateAccount(
+      {
+        id: selectedAccount.id,
+        payload: {
+          bankId: parseInt(editBankId),
+          accountNo: editAccountNo,
+          iban: editIban,
+          branchCode: editBranchCode,
+          branch: editBranch,
+        },
+      },
+      { onSuccess }
+    );
   };
 
   const handleDeleteAccount = (itemName, index) => {
@@ -186,23 +237,6 @@ const AddBankAccountTabContent = () => {
     setEditBranchCode(item.branchCode || "");
     setEditBranch(item.branch);
     setShowEditModal(true);
-  };
-
-  const handleUpdateAccount = (onSuccess) => {
-    if (!editAccountNo.trim() || !selectedAccount || !editBankId) return;
-    updateAccount(
-      {
-        id: selectedAccount.id,
-        payload: {
-          bankId: parseInt(editBankId),
-          accountNo: editAccountNo,
-          iban: editIban,
-          branchCode: editBranchCode,
-          branch: editBranch,
-        },
-      },
-      { onSuccess }
-    );
   };
 
   const handleToggleAccount = (item) => {
@@ -262,7 +296,7 @@ const AddBankAccountTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Bank Code" className="text-sm">
+            <FieldWrapper label="Bank Code" required className="text-sm">
               <Input
                 placeholder="Bank code"
                 className="text-sm bg-gray-50"
@@ -295,7 +329,7 @@ const AddBankAccountTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Branch Code" className="text-sm">
+            <FieldWrapper label="Branch Code" required className="text-sm">
               <Input
                 placeholder="Enter branch code"
                 className="text-sm"
@@ -306,7 +340,7 @@ const AddBankAccountTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Branch" className="text-sm">
+            <FieldWrapper label="Branch" required className="text-sm">
               <Input
                 placeholder="Enter branch name"
                 className="text-sm"
@@ -378,6 +412,13 @@ const AddBankAccountTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

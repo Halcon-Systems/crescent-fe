@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Plus } from "lucide-react";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -9,11 +8,13 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 import { EditButton, DeleteButton, ToggleButton } from "../components/ButtonComponents";
 import { useZones } from "@/hooks/zone/useZones";
 import { useCreateZone } from "@/hooks/zone/useCreateZone";
 import { useUpdateZone } from "@/hooks/zone/useUpdateZone";
 import { useDeleteZone } from "@/hooks/zone/useDeleteZone";
+import { useEmployees } from "@/hooks/employee/useEmployees";
 import { useOffices } from "@/hooks/office/useOffices";
 
 const CreateZoneTabContent = () => {
@@ -33,12 +34,20 @@ const CreateZoneTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedZone, setSelectedZone] = useState(null);
   const [viewItem, setViewItem] = useState(null);
+
+  // State for adding employees to zone
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedZoneId, setSelectedZoneId] = useState("");
+  const [employeeToggleStates, setEmployeeToggleStates] = useState({});
 
   // API hooks
   const { data: officesData } = useOffices();
   const { data, isLoading, error, isFetching, refetch } = useZones();
+  const { data: employeesData, isLoading: employeesLoading } = useEmployees();
 
   const { mutate: deleteZone } = useDeleteZone({
     onSuccess: () => refetch(),
@@ -103,6 +112,17 @@ const CreateZoneTabContent = () => {
     [officesData]
   );
 
+  const employeeOptions = useMemo(
+    () => {
+      if (!employeesData || employeesData.length === 0) return [];
+      return employeesData.map((emp) => ({
+        value: emp.employeeId ? emp.employeeId.toString() : "",
+        label: `${emp.employeeId} - ${emp.emailId || "N/A"}`,
+      }));
+    },
+    [employeesData]
+  );
+
   // Sync localZones with data whenever data changes
   useEffect(() => {
     if (!isLoading && !error && data) {
@@ -122,6 +142,17 @@ const CreateZoneTabContent = () => {
     return localZones;
   }, [localZones, isLoading, error]);
 
+  const zoneOptions = useMemo(
+    () => {
+      if (!zones || zones.length === 0) return [];
+      return zones.map((zone) => ({
+        value: zone.id.toString(),
+        label: zone.name || "Unknown Zone",
+      }));
+    },
+    [zones]
+  );
+
   const resetForm = () => {
     setSelectedOfficeId("");
     setSelectedOfficeName("");
@@ -135,13 +166,32 @@ const CreateZoneTabContent = () => {
     setEditOfficeId("");
   };
 
+  const validateCreateZone = () => {
+    const errors = [];
+    if (!zoneName.trim()) errors.push("Zone Name");
+    if (!officeId) errors.push("Office");
+    return errors;
+  };
+
   const handleCreateZone = () => {
-    if (!zoneName.trim() || !officeId) return;
+    const errors = validateCreateZone();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createZone({
       zoneName,
       officeId,
       isActive: true,
     });
+  };
+
+  const validateUpdateZone = () => {
+    const errors = [];
+    if (!editZoneName.trim()) errors.push("Zone Name");
+    if (!editOfficeId) errors.push("Office");
+    return errors;
   };
 
   const handleDeleteZone = (itemName, index) => {
@@ -159,7 +209,13 @@ const CreateZoneTabContent = () => {
   };
 
   const handleUpdateZone = (onSuccess) => {
-    if (!editZoneName.trim() || !selectedZone) return;
+    const errors = validateUpdateZone();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedZone) return;
     updateZone(
       {
         id: selectedZone.id,
@@ -199,15 +255,58 @@ const CreateZoneTabContent = () => {
     setViewItem(null);
   };
 
-  // Employee section - kept untouched as per user request
-  const [employees] = useState([
-    { name: "Dhulain Ahmed", call: "92-300-1234567", cnic: "12345-1234567-1", zone: "Zone Name", office: "Office Name", city: "Karachi" },
-    { name: "Faraz Khan", call: "92-300-1234567", cnic: "12345-1234567-1", zone: "Zone name", office: "Office Name", city: "Quetta" },
-    { name: "Amess Ali", call: "92-300-1234567", cnic: "12345-1234567-1", zone: "Zone Name", office: "Office Name", city: "Lahore" },
-  ]);
-  const [employeeToggleStates, setEmployeeToggleStates] = useState(() =>
-    Object.fromEntries(employees.map((_, index) => [index, true]))
-  );
+  // Sample data for demonstration
+  const sampleEmployeesData = [
+    {
+      name: "Ali Khan",
+      call: "03001234567",
+      cnic: "12345-6789012-3",
+      zone: "North Zone",
+      office: "Main Office",
+      city: "Lahore",
+    },
+    {
+      name: "Sara Ahmed",
+      call: "03109876543",
+      cnic: "98765-4321098-7",
+      zone: "South Zone",
+      office: "Branch Office",
+      city: "Karachi",
+    },
+    {
+      name: "Hassan Malik",
+      call: "03215554444",
+      cnic: "11111-2222233-4",
+      zone: "East Zone",
+      office: "Sub Office",
+      city: "Islamabad",
+    },
+    {
+      name: "Fatima Hussain",
+      call: "03335559999",
+      cnic: "55555-6666677-8",
+      zone: "West Zone",
+      office: "Regional Office",
+      city: "Multan",
+    },
+  ];
+
+  // Filter employees by selected zone (if zone is selected)
+  const employeesInZone = useMemo(() => {
+    // For now, show sample data - will be replaced with API data in future
+    if (!selectedZoneId) return sampleEmployeesData;
+    
+    if (!employeesData) return sampleEmployeesData;
+    // For now, return all employees - in a real app, you'd filter by zone assignment
+    return employeesData.map((emp) => ({
+      name: emp.emailId,
+      call: emp.primaryMobileNo || "N/A",
+      cnic: emp.cnic || "N/A",
+      zone: selectedZoneId,
+      office: "Office Name",
+      city: "City",
+    }));
+  }, [selectedZoneId, employeesData]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -305,19 +404,36 @@ const CreateZoneTabContent = () => {
         ]}
       />
 
-      {/* SECTION 3: Employees in Zone - KEPT UNTOUCHED */}
+      {/* SECTION 3: Employees in Zone */}
       <div className="pb-6 md:pb-8">
         <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6">
           Add Employees in Zone
         </h2>
 
-        <div className="flex flex-col md:flex-row items-stretch mb-6 ">
-          <FieldWrapper label="Select Employee" required className="text-sm flex-1">
-            <Input placeholder="Type & Search" className="text-sm py-2" />
-          </FieldWrapper>
-          <button className="w-full md:w-42 bg-customBlue text-white py-2 rounded-lg text-xl font-light hover:bg-customBlue/90 transition flex items-center justify-center gap-2 ">
-            <Plus></Plus> Add
-          </button>
+        <div className="flex flex-row gap-5 items-end mb-6">
+            <div className="flex-1">
+              <FieldWrapper label="Select Employee" required className="text-sm">
+                <Select
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  placeholder="Select Employee"
+                  options={employeeOptions}
+                  className="text-sm"
+                />
+              </FieldWrapper>
+            </div>
+            
+            <div className="flex-1">
+              <FieldWrapper label="Select Zone" required className="text-sm">
+                <Select
+                  value={selectedZoneId}
+                  onChange={(e) => setSelectedZoneId(e.target.value)}
+                  placeholder="Select Zone"
+                  options={zoneOptions}
+                  className="text-sm"
+                />
+              </FieldWrapper>
+            </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -337,40 +453,55 @@ const CreateZoneTabContent = () => {
               </tr>
             </thead>
             <tbody>
-              {employees.map((emp, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
-                  <td className="py-5 px-4">
-                    <input type="checkbox" className="mr-2 w-4 h-4 rounded-md border border-gray-300 accent-customBlue cursor-pointer appearance-none" />
-                  </td>
-                  <td className="py-5 px-4">{emp.name}</td>
-                  <td className="py-5 px-4">{emp.call}</td>
-                  <td className="py-5 px-4">{emp.cnic}</td>
-                  <td className="py-5 px-4">{emp.zone}</td>
-                  <td className="py-5 px-4">{emp.office}</td>
-                  <td className="py-5 px-4">{emp.city}</td>
-                  <td className="py-5 px-4">
-                    <div className="flex items-center gap-2">
-                      <EditButton onClick={() => console.log('Edit employee:', emp.name)} />
-                      <DeleteButton onClick={() => console.log('Delete employee:', emp.name)} />
-                      <ToggleButton
-                        isActive={!!employeeToggleStates[idx]}
-                        onClick={() =>
-                          setEmployeeToggleStates((prev) => ({
-                            ...prev,
-                            [idx]: !prev[idx],
-                          }))
-                        }
-                      />
-                    </div>
+              {employeesInZone && employeesInZone.length > 0 ? (
+                employeesInZone.map((emp, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50">
+                    <td className="py-5 px-4">
+                      <input type="checkbox" className="mr-2 w-4 h-4 rounded-md border border-gray-300 accent-customBlue cursor-pointer appearance-none" />
+                    </td>
+                    <td className="py-5 px-4">{emp.name}</td>
+                    <td className="py-5 px-4">{emp.call}</td>
+                    <td className="py-5 px-4">{emp.cnic}</td>
+                    <td className="py-5 px-4">{emp.zone}</td>
+                    <td className="py-5 px-4">{emp.office}</td>
+                    <td className="py-5 px-4">{emp.city}</td>
+                    <td className="py-5 px-4">
+                      <div className="flex items-center gap-2">
+                        <EditButton onClick={() => console.log('Edit employee:', emp.name)} />
+                        <DeleteButton onClick={() => console.log('Delete employee:', emp.name)} />
+                        <ToggleButton
+                          isActive={!!employeeToggleStates[idx]}
+                          onClick={() =>
+                            setEmployeeToggleStates((prev) => ({
+                              ...prev,
+                              [idx]: !prev[idx],
+                            }))
+                          }
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="py-5 px-4 text-center text-gray-500">
+                    No employees available
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
         
         <FormActions tabName="Zone" primaryClassName="bg-customBlue hover:bg-customBlue/90" />
       </div>
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
+      />
     </div>
   );
 };

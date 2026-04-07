@@ -7,6 +7,7 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 import { useClientCategories } from "@/hooks/client-category/useClientCategories";
 import { useCreateClientCategory } from "@/hooks/client-category/useCreateClientCategory";
 import { useUpdateClientCategory } from "@/hooks/client-category/useUpdateClientCategory";
@@ -24,6 +25,8 @@ const AddClientsCategoryTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [viewItem, setViewItem] = useState(null);
 
@@ -83,12 +86,29 @@ const AddClientsCategoryTabContent = () => {
     setEditCategoryName("");
   };
 
+  const validateCreateCategory = () => {
+    const errors = [];
+    if (!categoryName.trim()) errors.push("Category Name");
+    return errors;
+  };
+
   const handleCreateCategory = () => {
-    if (!categoryName.trim()) return;
+    const errors = validateCreateCategory();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createCategory({
       categoryName,
       isActive: true,
     });
+  };
+
+  const validateUpdateCategory = () => {
+    const errors = [];
+    if (!editCategoryName.trim()) errors.push("Category Name");
+    return errors;
   };
 
   const handleDeleteCategory = (itemName, index) => {
@@ -104,7 +124,13 @@ const AddClientsCategoryTabContent = () => {
   };
 
   const handleUpdateCategory = (onSuccess) => {
-    if (!editCategoryName.trim() || !selectedCategory) return;
+    const errors = validateUpdateCategory();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedCategory) return;
     updateCategory(
       {
         id: selectedCategory.id,
@@ -167,7 +193,7 @@ const AddClientsCategoryTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Category ID" className="text-sm">
+            <FieldWrapper label="Category ID" required className="text-sm">
               <Input
                 placeholder="Auto-generated"
                 className="text-sm bg-gray-50"
@@ -231,6 +257,13 @@ const AddClientsCategoryTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

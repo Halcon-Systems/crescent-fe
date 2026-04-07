@@ -286,7 +286,7 @@ const Clients = () => {
           <div className="flex items-center gap-2">
             <button 
               onClick={openAddClientForm}
-              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg font-medium text-xs md:text-sm"
+              className="cursor-pointer flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg font-medium text-xs md:text-sm"
             >
               <FiPlus className="w-4 h-4" />
               <span className="hidden xs:inline">Add Client</span>

@@ -9,7 +9,11 @@ const FormActions = ({ primaryClassName = "bg-customBlue hover:bg-customBlue/90"
 
   const handleSave = () => {
     if (onSave) {
-      onSave();
+      const result = onSave();
+      // Only show success modal if onSave returns true or doesn't return false
+      if (result === false) {
+        return; // Don't show success if validation failed
+      }
     }
     setShowSuccess(true);
   };

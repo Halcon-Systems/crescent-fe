@@ -11,6 +11,8 @@ import FormActions from "../components/FormActions";
 import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
+import Select from "@/components/ui/Select";
 
 const EmployeeTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,9 +30,16 @@ const EmployeeTabContent = () => {
   const [editNextOfKinContact, setEditNextOfKinContact] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewItem, setViewItem] = useState(null);
   const [localEmployees, setLocalEmployees] = useState([]);
+
+  const [username, setUsername] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [tempPass, setTempPass] = useState("");
+  const [retypeTempPass, setRetypeTempPass] = useState("");
 
   const { data, isLoading, error, isFetching, isPending, refetch } =
     useEmployees();
@@ -100,8 +109,28 @@ const EmployeeTabContent = () => {
     setEditNextOfKinContact("");
   };
 
+  const validateCreateEmployee = () => {
+    const errors = [];
+    if (!emailId.trim()) errors.push("Email");
+    if (!primaryMobileNo.trim()) errors.push("Primary Mobile No");
+    if (!cnic.trim()) errors.push("CNIC");
+    if (!designation.trim()) errors.push("Designations");
+    if (!nextOfKin.trim()) errors.push("Next of Kin");
+    if (!nextOfKinContact.trim()) errors.push("Next of Kin Contact");
+    if (!username.trim()) errors.push("Username");
+    if (!userRole.trim()) errors.push("Assign Role");
+    if (!tempPass.trim()) errors.push("Temporary Password");
+    if (!retypeTempPass.trim()) errors.push("Retype Temporary Password");
+    return errors;
+  };
+
   const handleCreateEmployee = () => {
-    if (!emailId.trim() || !primaryMobileNo.trim()) return;
+    const errors = validateCreateEmployee();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
     createEmployee({
       emailId,
       primaryMobileNo,
@@ -113,26 +142,25 @@ const EmployeeTabContent = () => {
     });
   };
 
-  const handleDeleteEmployee = (itemName, index) => {
-    if (employees[index]?.id) {
-      deleteEmployee(employees[index].id);
-    }
-  };
-
-  const handleEditEmployee = (item) => {
-    setSelectedEmployee(item);
-    setEditEmailId(item.email || "");
-    setEditPrimaryMobileNo(item.mobile || "");
-    const employeeData = data?.find((e) => e.employeeId === item.id);
-    setEditCnic(employeeData?.cnic || "");
-    setEditDesignation(item.designation || "");
-    setEditNextOfKin(employeeData?.nextOfKin || "");
-    setEditNextOfKinContact(employeeData?.nextOfKinContact || "");
-    setShowEditModal(true);
+  const validateUpdateEmployee = () => {
+    const errors = [];
+    if (!editEmailId.trim()) errors.push("Email");
+    if (!editPrimaryMobileNo.trim()) errors.push("Primary Mobile No");
+    if (!editCnic.trim()) errors.push("CNIC");
+    if (!editDesignation.trim()) errors.push("Designations");
+    if (!editNextOfKin.trim()) errors.push("Next of Kin");
+    if (!editNextOfKinContact.trim()) errors.push("Next of Kin Contact");
+    return errors;
   };
 
   const handleUpdateEmployee = (onSuccess) => {
-    if (!editEmailId.trim() || !selectedEmployee) return;
+    const errors = validateUpdateEmployee();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedEmployee) return;
     updateEmployee(
       {
         id: selectedEmployee.id,
@@ -160,6 +188,38 @@ const EmployeeTabContent = () => {
     }
   };
 
+  const handleDeleteEmployee = (itemName, index) => {
+    if (employees[index]?.id) {
+      deleteEmployee(employees[index].id);
+    }
+  };
+
+  const handleEditEmployee = (item) => {
+    setSelectedEmployee(item);
+    setEditEmailId(item.email || "");
+    setEditPrimaryMobileNo(item.mobile || "");
+    const employeeData = data?.find((e) => e.employeeId === item.id);
+    setEditCnic(employeeData?.cnic || "");
+    setEditDesignation(item.designation || "");
+    setEditNextOfKin(employeeData?.nextOfKin || "");
+    setEditNextOfKinContact(employeeData?.nextOfKinContact || "");
+    setShowEditModal(true);
+  };
+
+  const handleAssignUserRights = () => {
+    const errors = [];
+    if (!username.trim()) errors.push("Username");
+    if (!userRole.trim()) errors.push("Assign Role");
+    if (!tempPass.trim()) errors.push("Temporary Password");
+    if (!retypeTempPass.trim()) errors.push("Retype Temporary Password");
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      setShowValidationError(true);
+      return false;
+    }
+    alert(`Assigning role "${userRole}" to username "${username}" with temporary password.`);
+  }
+
   const handleViewEmployee = (item) => {
     setViewItem(item);
     setShowViewModal(true);
@@ -186,7 +246,7 @@ const EmployeeTabContent = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <FieldWrapper label="Email" className="text-sm">
+            <FieldWrapper label="Email" required className="text-sm">
               <Input
                 placeholder="Enter email"
                 className="text-sm py-2"
@@ -198,7 +258,7 @@ const EmployeeTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Primary Mobile No" className="text-sm">
+            <FieldWrapper label="Primary Mobile No" required className="text-sm">
               <Input
                 placeholder="Enter mobile number"
                 className="text-sm py-2"
@@ -209,7 +269,7 @@ const EmployeeTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="CNIC" className="text-sm">
+            <FieldWrapper label="CNIC" required className="text-sm">
               <Input
                 placeholder="e.g., 35202-1234567-1"
                 className="text-sm py-2"
@@ -220,18 +280,24 @@ const EmployeeTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Designation" className="text-sm">
-              <Input
-                placeholder="Enter designation"
-                className="text-sm py-2"
-                value={designation}
-                onChange={(e) => setDesignation(e.target.value)}
-              />
+            <FieldWrapper label="Designations" required className="text-sm">
+                <Select
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  placeholder="Select Designation"
+                  options={[
+                    { label: "GM", value: "GM" },
+                    { label: "Manager", value: "Manager" },
+                    { label: "Staff", value: "Staff" },
+                    { label: "Technician", value: "Technician" }
+                  ]}
+                  className="text-sm"
+                />
             </FieldWrapper>
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Next of Kin" className="text-sm">
+            <FieldWrapper label="Next of Kin" required className="text-sm">
               <Input
                 placeholder="Enter next of kin name"
                 className="text-sm py-2"
@@ -242,7 +308,7 @@ const EmployeeTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Next of Kin Contact" className="text-sm">
+            <FieldWrapper label="Next of Kin Contact" required className="text-sm">
               <Input
                 placeholder="Enter contact number"
                 className="text-sm py-2"
@@ -253,7 +319,7 @@ const EmployeeTabContent = () => {
           </div>
 
           <div className="space-y-1">
-            <FieldWrapper label="Employee ID" className="text-sm">
+            <FieldWrapper label="Employee ID" required className="text-sm">
               <Input
                 value="Auto"
                 readOnly
@@ -268,6 +334,67 @@ const EmployeeTabContent = () => {
           onSave={handleCreateEmployee}
           tabName="Employee"
         />
+
+        <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6 mt-8">
+          Assign User Rights
+        </h2>
+        
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="space-y-1">
+            <FieldWrapper label="Username" required className="text-sm">
+              <Input
+                placeholder="Type user name here"
+                className="text-sm py-2"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </FieldWrapper>
+          </div>
+
+          <div className="space-y-1">
+            <FieldWrapper label="Assign Role" required className="text-sm">
+              <Input
+                placeholder="Type user name here"
+                className="text-sm py-2"
+                type="text"
+                value={userRole}
+                onChange={(e) => setUserRole(e.target.value)}
+              />
+            </FieldWrapper>
+          </div>
+
+            <div className="space-y-1">
+            <FieldWrapper label="Temporary Password" required className="text-sm">
+              <Input
+                placeholder="Type temporary password here"
+                className="text-sm py-2"
+                type="password"
+                value={tempPass}
+                onChange={(e) => setTempPass(e.target.value)}
+              />
+            </FieldWrapper>
+          </div>
+
+          <div className="space-y-1">
+            <FieldWrapper label="Retype Temporary Password" required className="text-sm">
+              <Input
+                placeholder="Retype temporary password here"
+                className="text-sm py-2"
+                type="password"
+                value={retypeTempPass}
+                onChange={(e) => setRetypeTempPass(e.target.value)}
+              />
+            </FieldWrapper>
+          </div>
+        </div>
+
+          <FormActions
+            onSave={handleAssignUserRights}
+            tabName="Employee"
+          />
+          
       </div>
 
       {/* SECTION 2: Search Item */}
@@ -327,6 +454,13 @@ const EmployeeTabContent = () => {
             render: (value) => (value ? "Active" : "Inactive"),
           },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );

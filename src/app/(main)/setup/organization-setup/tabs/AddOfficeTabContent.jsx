@@ -10,6 +10,7 @@ import { useDeleteOffice } from "@/hooks/office/useDeleteOffice";
 import { useUpdateOffice } from "@/hooks/office/useUpdateOffice";
 import { useCreateOffice } from "@/hooks/office/useCreateOffice";
 import EditModal from "../components/EditModal";
+import ValidationErrorModal from "../components/ValidationErrorModal";
 
 const AddOfficeTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,6 +18,8 @@ const AddOfficeTabContent = () => {
   const [editOfficeName, setEditOfficeName] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showValidationError, setShowValidationError] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [localOffices, setLocalOffices] = useState([]);
   
@@ -65,7 +68,11 @@ const AddOfficeTabContent = () => {
   }, [localOffices, isLoading, error]);
 
   const handleCreateOffice = () => {
-    if (!officeName.trim()) return;
+    if (!officeName.trim()) {
+      setValidationErrors(["Office Name"]);
+      setShowValidationError(true);
+      return false;
+    }
     createOffice({ officeName });
   };
 
@@ -80,7 +87,12 @@ const AddOfficeTabContent = () => {
   };
 
   const handleUpdateOffice = (onSuccess) => {
-    if (!editOfficeName.trim() || !selectedOffice) return;
+    if (!editOfficeName.trim()) {
+      setValidationErrors(["Office Name"]);
+      setShowValidationError(true);
+      return;
+    }
+    if (!selectedOffice) return;
     updateOffice(
       { id: selectedOffice.id, payload: { officeName: editOfficeName } },
       { onSuccess }
@@ -123,7 +135,7 @@ const AddOfficeTabContent = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
-            <FieldWrapper label="Office Name" className="text-sm">
+            <FieldWrapper label="Office Name" required className="text-sm">
               <Input
                 placeholder="Type here"
                 className="text-sm py-2"
@@ -134,7 +146,7 @@ const AddOfficeTabContent = () => {
           </div>
           
           <div className="space-y-1">
-            <FieldWrapper label="Account ID" className="text-sm">
+            <FieldWrapper label="Account ID" required className="text-sm">
               <Input 
                 value="Auto" 
                 readOnly 
@@ -183,6 +195,13 @@ const AddOfficeTabContent = () => {
         fields={[
           { label: "Office Name", value: editOfficeName, onChange: setEditOfficeName },
         ]}
+      />
+
+      {/* Validation Error Modal */}
+      <ValidationErrorModal
+        isOpen={showValidationError}
+        onClose={() => setShowValidationError(false)}
+        missingFields={validationErrors}
       />
     </div>
   );
