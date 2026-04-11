@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import SuccessModal from "@/components/ui/SuccessModal";
 import { FormButton } from "./ButtonComponents";
 
-const FormActions = ({ primaryClassName = "bg-customBlue hover:bg-customBlue/90", onSave, tabName = "Item", onSuccessClose }) => {
+const FormActions = ({ primaryClassName = "bg-customBlue hover:bg-customBlue/90", onSave, tabName = "Item", onSuccessClose, onCancel, isLoading = false, showAutoSuccess = true }) => {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSave = () => {
@@ -15,7 +15,15 @@ const FormActions = ({ primaryClassName = "bg-customBlue hover:bg-customBlue/90"
         return; // Don't show success if validation failed
       }
     }
-    setShowSuccess(true);
+    if (showAutoSuccess) {
+      setShowSuccess(true);
+    }
+  };
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   const handleCloseSuccess = () => {
@@ -26,8 +34,8 @@ const FormActions = ({ primaryClassName = "bg-customBlue hover:bg-customBlue/90"
   return (
     <>
       <div className="flex gap-3 md:pt-4 mt-4 md:mt-6 justify-end">
-        <FormButton theme="cancel" text="Cancel" />
-        <FormButton theme="primary" text="Save" onClick={handleSave} className={primaryClassName} />
+        <FormButton theme="cancel" text="Cancel" onClick={handleCancel} />
+        <FormButton theme="primary" text="Save" onClick={handleSave} className={primaryClassName} disabled={isLoading} />
       </div>
 
       <SuccessModal

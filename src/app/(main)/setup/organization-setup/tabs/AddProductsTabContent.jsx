@@ -12,6 +12,7 @@ import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 const AddProductsTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +21,7 @@ const AddProductsTabContent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [viewItem, setViewItem] = useState(null);
@@ -44,6 +46,7 @@ const AddProductsTabContent = () => {
 
   const { mutate: createProduct, isPending: isCreating } = useCreateProduct({
     onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "Product created successfully" });
       setProductName("");
       setTimeout(() => {
         refetch();
@@ -122,6 +125,11 @@ const AddProductsTabContent = () => {
     setEditProductName("");
   };
 
+  const resetForm = () => {
+    setProductName("");
+    setSelectedProduct(null);
+  };
+
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     resetEditForm();
@@ -167,7 +175,9 @@ const AddProductsTabContent = () => {
 
         <FormActions
           onSave={handleCreateProduct}
+          onCancel={resetForm}
           tabName="Product"
+          isLoading={isCreating}
         />
       </div>
 
@@ -228,6 +238,14 @@ const AddProductsTabContent = () => {
         isOpen={showValidationError}
         onClose={() => setShowValidationError(false)}
         missingFields={validationErrors}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        title="Success"
+        message={successModal.message}
       />
     </div>
   );

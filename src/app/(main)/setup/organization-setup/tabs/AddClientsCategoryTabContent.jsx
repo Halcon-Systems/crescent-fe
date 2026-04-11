@@ -8,6 +8,7 @@ import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 import { useClientCategories } from "@/hooks/client-category/useClientCategories";
 import { useCreateClientCategory } from "@/hooks/client-category/useCreateClientCategory";
 import { useUpdateClientCategory } from "@/hooks/client-category/useUpdateClientCategory";
@@ -26,6 +27,7 @@ const AddClientsCategoryTabContent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [viewItem, setViewItem] = useState(null);
@@ -54,6 +56,7 @@ const AddClientsCategoryTabContent = () => {
 
   const { mutate: createCategory, isPending: isCreating } = useCreateClientCategory({
     onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "Client Category created successfully" });
       resetForm();
       setTimeout(() => refetch(), 1000);
     },
@@ -204,7 +207,7 @@ const AddClientsCategoryTabContent = () => {
           </div>
         </div>
 
-        <FormActions onSave={handleCreateCategory} tabName="Client Category" />
+        <FormActions onSave={handleCreateCategory} onCancel={resetForm} tabName="Client Category" isLoading={isCreating} showAutoSuccess={false} />
       </div>
 
       {/* SECTION 2: Search Categories */}
@@ -264,6 +267,14 @@ const AddClientsCategoryTabContent = () => {
         isOpen={showValidationError}
         onClose={() => setShowValidationError(false)}
         missingFields={validationErrors}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        title="Success"
+        message={successModal.message}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 import Select from "@/components/ui/Select";
 
 const EmployeeTabContent = () => {
@@ -31,6 +32,7 @@ const EmployeeTabContent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [viewItem, setViewItem] = useState(null);
@@ -65,6 +67,7 @@ const EmployeeTabContent = () => {
 
   const { mutate: createEmployee, isPending: isCreating } = useCreateEmployee({
     onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "Employee created successfully" });
       resetForm();
       refetch();
     },
@@ -107,6 +110,13 @@ const EmployeeTabContent = () => {
     setEditDesignation("");
     setEditNextOfKin("");
     setEditNextOfKinContact("");
+  };
+
+  const resetUserRightsForm = () => {
+    setUsername("");
+    setUserRole("");
+    setTempPass("");
+    setRetypeTempPass("");
   };
 
   const validateCreateEmployee = () => {
@@ -332,7 +342,10 @@ const EmployeeTabContent = () => {
 
         <FormActions
           onSave={handleCreateEmployee}
+          onCancel={resetForm}
           tabName="Employee"
+          isLoading={isCreating}
+          showAutoSuccess={false}
         />
 
         <h2 className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-6 mt-8">
@@ -392,6 +405,7 @@ const EmployeeTabContent = () => {
 
           <FormActions
             onSave={handleAssignUserRights}
+            onCancel={resetUserRightsForm}
             tabName="Employee"
           />
           
@@ -462,7 +476,13 @@ const EmployeeTabContent = () => {
         onClose={() => setShowValidationError(false)}
         missingFields={validationErrors}
       />
-    </div>
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        title="Success"
+        message={successModal.message}
+      />    </div>
   );
 };
 

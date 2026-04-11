@@ -12,6 +12,7 @@ import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 const PackageTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,6 +25,7 @@ const PackageTabContent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [viewItem, setViewItem] = useState(null);
@@ -53,6 +55,7 @@ const PackageTabContent = () => {
 
   const { mutate: createPackage, isPending: isCreating } = useCreatePackage({
     onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "Package created successfully" });
       resetForm();
       refetch();
     },
@@ -243,7 +246,10 @@ const PackageTabContent = () => {
 
         <FormActions
           onSave={handleCreatePackage}
+          onCancel={resetForm}
           tabName="Package"
+          isLoading={isCreating}
+          showAutoSuccess={false}
         />
       </div>
 
@@ -308,6 +314,14 @@ const PackageTabContent = () => {
         isOpen={showValidationError}
         onClose={() => setShowValidationError(false)}
         missingFields={validationErrors}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        title="Success"
+        message={successModal.message}
       />
     </div>
   );

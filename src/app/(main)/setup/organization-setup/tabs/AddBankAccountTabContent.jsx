@@ -10,6 +10,7 @@ import SearchList from "../components/SearchList";
 import EditModal from "../components/EditModal";
 import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
@@ -40,6 +41,7 @@ const AddBankAccountTabContent = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showValidationError, setShowValidationError] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   const [validationErrors, setValidationErrors] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [viewItem, setViewItem] = useState(null);
@@ -97,6 +99,7 @@ const AddBankAccountTabContent = () => {
 
   const { mutate: createAccount, isPending: isCreating } = useCreateBankAccount({
     onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "Bank Account created successfully" });
       resetForm();
       setTimeout(() => refetch(), 1000);
     },
@@ -351,7 +354,13 @@ const AddBankAccountTabContent = () => {
           </div>
         </div>
 
-        <FormActions onSave={handleCreateAccount} tabName="Bank Account" />
+        <FormActions
+          onSave={handleCreateAccount}
+          onCancel={resetForm}
+          tabName="Bank Account"
+          isLoading={isCreating}
+          showAutoSuccess={false}
+        />
       </div>
 
       {/* SECTION 2: Search List */}
@@ -419,6 +428,14 @@ const AddBankAccountTabContent = () => {
         isOpen={showValidationError}
         onClose={() => setShowValidationError(false)}
         missingFields={validationErrors}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+        title="Success"
+        message={successModal.message}
       />
     </div>
   );
