@@ -12,8 +12,8 @@ const Select = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Get the label for the selected value
-  const selectedLabel = options.find(opt => opt.value === value)?.label || placeholder;
+  // Always compare as string for value matching
+  const selectedLabel = options.find(opt => String(opt.value) === String(value))?.label || placeholder;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -28,7 +28,8 @@ const Select = ({
   }, []);
 
   const handleSelect = (optionValue) => {
-    onChange({ target: { value: optionValue } });
+    // Always pass the name prop from Select, not from DOM
+    onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
   };
 

@@ -1,9 +1,12 @@
 import { FiCalendar } from "react-icons/fi";
 
-const DateInput = ({ placeholder }) => (
-    <div className="flex items-center justify-between">
+const DateInput = ({ name, value, onChange, placeholder, className = "" }) => (
+    <div className={`flex items-center justify-between ${className}`}>
         <input
-            type="text"
+            type="date"
+            name={name}
+            value={value ?? ''}
+            onChange={onChange}
             placeholder={placeholder}
             className="bg-transparent outline-none text-sm md:text-base text-gray-900 placeholder-gray-400 flex-1"
         />
