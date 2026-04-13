@@ -1,3 +1,23 @@
+export async function deletePermission(id) {
+	try {
+		const response = await axios.delete(`${PERMISSIONS_API_URL}/${id}`);
+		return response.data;
+	} catch (error) {
+		throw error.response?.data || error;
+	}
+}
+export async function updatePermission(id, permission) {
+	try {
+		const response = await axios.patch(`${PERMISSIONS_API_URL}/${id}`, permission, {
+			headers: {
+				'Content-Type': 'application/json',
+			},
+		});
+		return response.data;
+	} catch (error) {
+		throw error.response?.data || error;
+	}
+}
 export async function getPermissionById(id) {
 	try {
 		const response = await axios.get(`${PERMISSIONS_API_URL}/${id}`);
