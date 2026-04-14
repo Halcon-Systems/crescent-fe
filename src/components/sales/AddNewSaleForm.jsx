@@ -53,7 +53,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
         e.preventDefault();
         try {
             const payload = {
-                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 0,
+                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 1,
                 irNo: form.irNo,
                 fullName: form.fullName,
                 cnicNo: form.cnicNo,
