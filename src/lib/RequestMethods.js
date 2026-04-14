@@ -164,10 +164,6 @@ userRequest.interceptors.response.use(
                 if (typeof window !== 'undefined' && window.toast) {
                     window.toast.error('Access denied');
                 }
-<<<<<<< HEAD
-=======
-                
->>>>>>> 98389023197f7a887888d4fb6e8194f2b91091cb
                 break;
             case 500:
                 console.error('Server error:', safeErrorDetails);

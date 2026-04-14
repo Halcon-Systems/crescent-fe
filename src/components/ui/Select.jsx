@@ -44,11 +44,7 @@ const Select = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full min-h-10 flex items-center justify-between py-2  rounded-lg transition-colors ${
-          disabled 
-            ? "text-gray-500 cursor-not-allowed" 
-            : "text-gray-700 hover:border-gray-400 cursor-pointer"
-        }`}
+        className={`w-full min-h-10 flex items-center justify-between py-2  rounded-lg transition-colors `}
       >
         <span className={value ? "text-gray-900" : "text-gray-400"}>
           {selectedLabel}
