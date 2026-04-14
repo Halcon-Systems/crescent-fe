@@ -136,13 +136,13 @@ const Sidebar = ({collapseSide, setCollapseSide}) => {
         transition-all duration-300 ease-in-out
         ${collapseSide ? 'w-20' : 'w-64'}
       `}>
-        <button 
+        {/* <button 
           onClick={()=> setCollapseSide(!collapseSide)}
           className={` cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors w-[90%] flex justify-center m-auto`}
           title={collapseSide ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <PanelRight className={`${collapseSide ? 'rotate-180' : ''}`} />
-        </button>
+        </button> */}
 
         {/* Hide everything when collapsed */}
         {!collapseSide && (

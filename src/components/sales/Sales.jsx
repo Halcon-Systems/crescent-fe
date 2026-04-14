@@ -103,7 +103,11 @@ const Sales = () => {
                   setActiveForm("operationsProcess");
             }}
           />}
-        {activeForm === "operationsProcess" && <OperationProcessForm saleId={effectiveSaleId} />}
+        {activeForm === "operationsProcess" && <OperationProcessForm saleId={effectiveSaleId} 
+            onSuccess={() => {
+                    setActiveForm("installation");
+                }}
+            />}
         {activeForm === "installation" && <InstallationForm saleId={effectiveSaleId} />}
       </div>
     </div>

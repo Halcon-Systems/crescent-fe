@@ -214,7 +214,7 @@ const OperationProcessForm = ({ saleId }) => {
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
-                                <Select name="productId" value={form.productId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={productOptions} />
+                                <Select name="productId" value={form.productId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={productOptions} disabled={true}/>
                             </FieldWrapper>
                             
                             <FieldWrapper label="Sale Type" required className="text-sm">
@@ -225,7 +225,7 @@ const OperationProcessForm = ({ saleId }) => {
                         {/* Column 2 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Package Type" required className="text-sm">
-                                <Select name="packageId" value={form.packageId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={packageOptions} />
+                                <Select name="packageId" value={form.packageId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={packageOptions} disabled={true}/>
                             </FieldWrapper>
 
                             <FieldWrapper label="Sales Remarks" className="text-sm">
@@ -245,7 +245,7 @@ const OperationProcessForm = ({ saleId }) => {
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
-                                <Select name="productId" value={form.productId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={productOptions} />
+                                <Select name="productId" value={form.productId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={productOptions} disabled={true}/>
                             </FieldWrapper>
                             
                             <FieldWrapper label="Select Zone" required className="text-sm">
@@ -272,7 +272,17 @@ const OperationProcessForm = ({ saleId }) => {
                             </FieldWrapper>
                             
                             <FieldWrapper label="Assign Technician" required className="text-sm">
-                                <Select name="assignedTechnicianUserId" value={form.assignedTechnicianUserId} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={technicianOptions} />
+                                <Select name="assignedTechnicianUserId" value={form.assignedTechnicianUserId} onChange={handleChange} placeholder="Select" className="text-sm py-2" 
+                                // options={technicianOptions}
+                                options={
+                                    [
+                                        { value: 4, label: 'Technician 1' },
+                                        { value: 4, label: 'Technician 2' },
+                                        { value: 4, label: 'Technician 3' },
+                                        { value: 4, label: 'Technician 4' },
+                                    ]
+                                }
+                                 />
                             </FieldWrapper>
 
                             <FieldWrapper label="Select Device" required className="text-sm">

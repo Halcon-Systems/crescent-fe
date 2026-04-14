@@ -8,6 +8,7 @@ import DateInput from "../ui/DateInput";
 import ConfidentialForm from "./ConfidentialForm";
 import { useUpdateTechnicianStage } from "@/hooks/sales/useUpdateTechnicianStage";
 import { useSaleById } from "@/hooks/sales/useSaleById";
+import { useClientCategories } from "@/hooks/client-category/useClientCategories";
 
 const TABS = {
     CLIENT: "client",
@@ -15,13 +16,22 @@ const TABS = {
     VEHICLE: "vehicle",
 };
 
+const mapOptions = (items, idKeys, labelKeys) =>
+    (items || []).map((item) => {
+        const value = idKeys.map((k) => item?.[k]).find((v) => v !== undefined && v !== null);
+        const label = labelKeys.map((k) => item?.[k]).find((v) => typeof v === 'string' && v.trim() !== '');
+        return { value: String(value ?? ''), label: label || `ID: ${value}` };
+    }).filter((opt) => opt.value);
+
 const InstallationForm = ({ saleId }) => {
     const [activeTab, setActiveTab] = useState(TABS.CLIENT);
     const [confidentialForm, setConfidentialForm] = useState(false)
     const { update, loading, error } = useUpdateTechnicianStage();
     const { data: sale } = useSaleById(saleId);
+    const { data: clientCategories = [] } = useClientCategories();
     const [successMessage, setSuccessMessage] = useState("");
     const [validationMessage, setValidationMessage] = useState("");
+    const [selectedCategoryId, setSelectedCategoryId] = useState("");
     const [form, setForm] = useState({
         installationDate: "",
         renewalDate: "",
@@ -33,6 +43,12 @@ const InstallationForm = ({ saleId }) => {
         vehicleYear: "",
         color: "",
     });
+
+    // Create client category options
+    const clientCategoryOptions = useMemo(
+        () => mapOptions(clientCategories, ['id', 'clientCategoryId', '_id'], ['categoryName', 'name', 'label']),
+        [clientCategories]
+    );
 
     const normalizedSale = useMemo(() => {
         const client = sale?.clientDetails || {};
@@ -71,6 +87,11 @@ const InstallationForm = ({ saleId }) => {
             vehicleYear: stage.vehicleYear ? String(stage.vehicleYear) : prev.vehicleYear,
             color: stage.color || prev.color,
         }));
+        
+        // Set selected category from sale data
+        if (sale?.clientDetails?.clientCategoryId || sale?.clientCategoryId) {
+            setSelectedCategoryId(String(sale?.clientDetails?.clientCategoryId || sale?.clientCategoryId || ''));
+        }
     }, [sale]);
 
     const tabButtonClasses = (isActive) =>
@@ -167,7 +188,13 @@ const InstallationForm = ({ saleId }) => {
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Client Category" required className="text-sm">
-                                <Input value={normalizedSale.clientCategory || ""} placeholder="Select" className="text-sm py-2" disabled />
+                                <Select 
+                                    value={selectedCategoryId} 
+                                    onChange={(e) => setSelectedCategoryId(e.target.value)} 
+                                    placeholder="Choose client category" 
+                                    className="text-sm py-2" 
+                                    options={clientCategoryOptions}
+                                />
                             </FieldWrapper>
 
                             <FieldWrapper label="Select IR No." className="text-sm">
