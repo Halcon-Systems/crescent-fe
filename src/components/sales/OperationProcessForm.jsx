@@ -12,6 +12,7 @@ import { useDevices } from '@/hooks/devices/useDevices';
 import { useEmployees } from '@/hooks/employee/useEmployees';
 import { useUpdateOperationsStage } from '@/hooks/sales/useUpdateOperationsStage';
 import { useSaleById } from '@/hooks/sales/useSaleById';
+import { useClientCategories } from '@/hooks/client-category/useClientCategories';
 
 const initialForm = {
     productId: '',
@@ -38,6 +39,7 @@ const OperationProcessForm = ({ saleId }) => {
     const [successMessage, setSuccessMessage] = useState('');
     const [validationMessage, setValidationMessage] = useState('');
     const { data: sale } = useSaleById(saleId);
+    const { data: clientCategories = [] } = useClientCategories();
     const { update, loading, error } = useUpdateOperationsStage();
     const { data: products = [] } = useProducts();
     const { data: packages = [] } = usePackages();
@@ -48,11 +50,26 @@ const OperationProcessForm = ({ saleId }) => {
     const { data: devices = [] } = useDevices();
     const { data: employees = [] } = useEmployees();
 
+    // Helper to map clientCategoryId to name
+    const getMappedLabel = (items, id, idKeys, labelKeys) => {
+        if (id === undefined || id === null || id === '') return '';
+        const item = (items || []).find((entry) =>
+            idKeys.some((key) => String(entry?.[key]) === String(id))
+        );
+        if (!item) return String(id);
+        const label = labelKeys.map((key) => item?.[key]).find((val) => typeof val === 'string' && val.trim() !== '');
+        return label || String(id);
+    };
+
     const normalizedSale = useMemo(() => {
         const client = sale?.clientDetails || {};
         const product = sale?.productDetails || {};
+        const clientCategoryName =
+            client?.clientCategory?.categoryName ||
+            sale?.clientCategory?.categoryName ||
+            getMappedLabel(clientCategories, client?.clientCategoryId, ['id', 'clientCategoryId', 'categoryId', '_id'], ['categoryName', 'name', 'label']);
         return {
-            clientCategory: client?.clientCategory?.categoryName || sale?.clientCategory?.categoryName || '',
+            clientCategory: clientCategoryName || '',
             irNo: client?.irNo || sale?.irNo || '',
             fullName: client?.fullName || sale?.fullName || '',
             clientStatus: client?.clientStatus || sale?.clientStatus || '',
@@ -63,23 +80,28 @@ const OperationProcessForm = ({ saleId }) => {
             defaultProductId: product?.productId || sale?.productId || '',
             defaultPackageId: product?.packageId || sale?.packageId || '',
         };
-    }, [sale]);
+    }, [sale, clientCategories]);
 
     useEffect(() => {
         const stage = sale?.operationsAssignment || sale?.operationsStage || sale?.operationStage || {};
-        setForm((prev) => ({
-            ...prev,
-            productId: stage.productId ? String(stage.productId) : (normalizedSale.defaultProductId ? String(normalizedSale.defaultProductId) : prev.productId),
-            zoneId: stage.zoneId ? String(stage.zoneId) : prev.zoneId,
-            deviceComboId: stage.deviceComboId ? String(stage.deviceComboId) : prev.deviceComboId,
-            simId: stage.simId ? String(stage.simId) : prev.simId,
-            accessory1Id: stage.accessory1Id ? String(stage.accessory1Id) : prev.accessory1Id,
-            accessory2Id: stage.accessory2Id ? String(stage.accessory2Id) : prev.accessory2Id,
-            accessory3Id: stage.accessory3Id ? String(stage.accessory3Id) : prev.accessory3Id,
-            packageId: stage.packageId ? String(stage.packageId) : (normalizedSale.defaultPackageId ? String(normalizedSale.defaultPackageId) : prev.packageId),
-            assignedTechnicianUserId: stage.assignedTechnicianUserId ? String(stage.assignedTechnicianUserId) : prev.assignedTechnicianUserId,
-            deviceId: stage.deviceId ? String(stage.deviceId) : prev.deviceId,
-        }));
+        const newForm = {
+            productId: stage.productId ? String(stage.productId) : (normalizedSale.defaultProductId ? String(normalizedSale.defaultProductId) : ''),
+            zoneId: stage.zoneId ? String(stage.zoneId) : '',
+            deviceComboId: stage.deviceComboId ? String(stage.deviceComboId) : '',
+            simId: stage.simId ? String(stage.simId) : '',
+            accessory1Id: stage.accessory1Id ? String(stage.accessory1Id) : '',
+            accessory2Id: stage.accessory2Id ? String(stage.accessory2Id) : '',
+            accessory3Id: stage.accessory3Id ? String(stage.accessory3Id) : '',
+            packageId: stage.packageId ? String(stage.packageId) : (normalizedSale.defaultPackageId ? String(normalizedSale.defaultPackageId) : ''),
+            assignedTechnicianUserId: stage.assignedTechnicianUserId ? String(stage.assignedTechnicianUserId) : '',
+            deviceId: stage.deviceId ? String(stage.deviceId) : '',
+        };
+        // Only update if values actually changed
+        setForm(prev => {
+            const isSame = Object.keys(newForm).every(key => prev[key] === newForm[key]);
+            if (isSame) return prev;
+            return newForm;
+        });
     }, [sale, normalizedSale.defaultProductId, normalizedSale.defaultPackageId]);
 
     const handleChange = (e) => {
