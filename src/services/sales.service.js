@@ -21,6 +21,65 @@ export async function createSale(payload) {
 		throw error;
 	}
 }
+
+/**
+ * Helper to generate the correct payload for the createSale API.
+ * @param {object} data - The sale data to send to the API.
+ * @returns {object} - The payload formatted for the API.
+ *
+ * Example usage:
+ *   const payload = buildCreateSalePayload({
+ *     clientCategoryId: 1,
+ *     irNo: 'IR123',
+ *     fullName: 'John Doe',
+ *     cnicNo: '12345-1234567-1',
+ *     phoneHome: '0123456789',
+ *     emailId: 'john@example.com',
+ *     address: '123 Main St',
+ *     clientStatus: 'Active',
+ *     callNo: '555-1234',
+ *     fatherName: 'Father Name',
+ *     dateOfBirth: '1990-01-01',
+ *     phoneOffice: '555-5678',
+ *     companyDepartment: 'Sales',
+ *     addressLine2: 'Suite 100',
+ *     productId: 2,
+ *     saleAmount: 1000,
+ *     saleType: 'CREDIT',
+ *     packageId: 3,
+ *     renewalCharges: 100,
+ *     customTypeValue: 0,
+ *     salesRemarks: 'First sale',
+ *     submitToAccounts: true
+ *   });
+ *   await createSale(payload);
+ */
+export function buildCreateSalePayload(data) {
+	return {
+		clientCategoryId: data.clientCategoryId ?? 0,
+		irNo: data.irNo ?? '',
+		fullName: data.fullName ?? '',
+		cnicNo: data.cnicNo ?? '',
+		phoneHome: data.phoneHome ?? '',
+		emailId: data.emailId ?? '',
+		address: data.address ?? '',
+		clientStatus: data.clientStatus ?? '',
+		callNo: data.callNo ?? '',
+		fatherName: data.fatherName ?? '',
+		dateOfBirth: data.dateOfBirth ?? '',
+		phoneOffice: data.phoneOffice ?? '',
+		companyDepartment: data.companyDepartment ?? '',
+		addressLine2: data.addressLine2 ?? '',
+		productId: data.productId ?? 0,
+		saleAmount: data.saleAmount ?? 0,
+		saleType: data.saleType ?? 'CREDIT',
+		packageId: data.packageId ?? 0,
+		renewalCharges: data.renewalCharges ?? 0,
+		customTypeValue: data.customTypeValue ?? 0,
+		salesRemarks: data.salesRemarks ?? '',
+		submitToAccounts: data.submitToAccounts ?? true
+	};
+}
 export async function updateOperationsStage(id, payload) {
 	try {
 		const response = await userRequest.patch(`${API_BASE}/${id}/operations-stage`, payload);
