@@ -39,6 +39,7 @@ const initialForm = {
 
 const AddNewSaleForm = ({ onSuccess }) => {
     const [form, setForm] = useState(initialForm);
+    const [validationError, setValidationError] = useState('');
     const { create, loading, error, data } = useCreateSale();
     const { data: clientCategories, isLoading: loadingCategories } = useClientCategories();
     const { data: products, isLoading: loadingProducts } = useProducts();
@@ -47,14 +48,23 @@ const AddNewSaleForm = ({ onSuccess }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        setValidationError('');
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const selectedClientCategoryValue = form.clientCategoryId || clientCategoryOptions[0]?.value;
+            const resolvedClientCategoryId = Number(selectedClientCategoryValue);
+
+            if (!Number.isFinite(resolvedClientCategoryId) || resolvedClientCategoryId <= 0) {
+                setValidationError('Please select a valid client category.');
+                return;
+            }
+
             const payload = {
-                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 1,
+                clientCategoryId: resolvedClientCategoryId,
                 irNo: form.irNo,
                 fullName: form.fullName,
                 cnicNo: form.cnicNo,
@@ -84,16 +94,12 @@ const AddNewSaleForm = ({ onSuccess }) => {
         }
     };
 
-    useEffect(()=>{
-        console.log(form);
-    },[form])
-
     // Create option arrays
     const clientCategoryOptions = clientCategories && clientCategories.length > 0
         ? clientCategories.map(cat => ({
-            value: String(cat.id || cat._id || cat.value || cat.clientCategoryId),
+            value: String(cat.id ?? cat._id ?? cat.value ?? cat.clientCategoryId ?? ''),
             label: cat.categoryName || cat.label || cat.name
-        }))
+        })).filter((opt) => opt.value !== '' && opt.value !== 'undefined' && opt.value !== 'null')
         : [];
 
     const productOptions = products && products.length > 0
@@ -413,6 +419,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
                 </div>
             </div>
             {error && <div className="text-red-500 mt-2">{error}</div>}
+            {validationError && <div className="text-red-500 mt-2">{validationError}</div>}
             {data && <div className="text-green-600 mt-2">Sale stage updated successfully!</div>}
         </form>
     )

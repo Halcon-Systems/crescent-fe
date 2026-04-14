@@ -1,14 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AddNewSaleForm from "./AddNewSaleForm";
 import AccountsApprovalForm from "./AccountsApprovalForm";
 import OperationProcessForm from "./OperationProcessForm";
 import InstallationForm from "./InstallationForm";
+import { useSales } from "@/hooks/sales/useSales";
 
 const Sales = () => {
   const [activeForm, setActiveForm] = useState("addSale");
   const [newSaleId, setNewSaleId] = useState(null);
+  const [selectedSaleId, setSelectedSaleId] = useState("");
+  const { data: sales = [] } = useSales();
+
+  const saleOptions = useMemo(
+    () =>
+      (Array.isArray(sales) ? sales : []).map((sale) => {
+        const id = sale?.saleId ?? sale?.id ?? sale?._id;
+        const code = sale?.saleCode || sale?.clientDetails?.irNo || `Sale #${id}`;
+        return { id: String(id), label: code };
+      }).filter((opt) => opt.id),
+    [sales]
+  );
+
+  useEffect(() => {
+    if (!newSaleId && !selectedSaleId && saleOptions.length) {
+      setSelectedSaleId(saleOptions[0].id);
+    }
+  }, [newSaleId, selectedSaleId, saleOptions]);
+
+  const effectiveSaleId = newSaleId ?? (selectedSaleId ? Number(selectedSaleId) : null);
 
   // Button config array
   const buttons = [
@@ -48,17 +69,38 @@ const Sales = () => {
 
       {/* Right form area */}
       <div className="flex-1 min-w-0">
+        {activeForm !== "addSale" && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Sale</label>
+            <select
+              value={effectiveSaleId ?? ""}
+              onChange={(e) => {
+                setNewSaleId(null);
+                setSelectedSaleId(e.target.value);
+              }}
+              className="w-full md:w-80 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+            >
+              {!saleOptions.length && <option value="">No sales available</option>}
+              {saleOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {activeForm === "addSale" && (
           <AddNewSaleForm
             onSuccess={(sale) => {
-              setNewSaleId(sale.id || sale._id);
+              const createdId = sale?.saleId ?? sale?.id ?? sale?._id;
+              setNewSaleId(createdId);
               setActiveForm("accountsApproval");
             }}
           />
         )}
-        {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={newSaleId} />}
-        {activeForm === "operationsProcess" && <OperationProcessForm />}
-        {activeForm === "installation" && <InstallationForm />}
+        {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={effectiveSaleId} />}
+        {activeForm === "operationsProcess" && <OperationProcessForm saleId={effectiveSaleId} />}
+        {activeForm === "installation" && <InstallationForm saleId={effectiveSaleId} />}
       </div>
     </div>
   );

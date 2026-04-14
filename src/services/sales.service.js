@@ -126,3 +126,13 @@ export async function getSales() {
 		throw error;
 	}
 }
+
+export async function deleteSale(id) {
+	try {
+		const response = await userRequest.delete(`${API_BASE}/${id}`);
+		return response.data?.data || response.data;
+	} catch (error) {
+		console.error('Error deleting sale:', error);
+		throw error;
+	}
+}

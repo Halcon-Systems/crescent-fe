@@ -20,7 +20,7 @@ export async function updateDeviceCombo(id: number, combo: DeviceCombo) {
 }
 export async function getDeviceComboById(id: number) {
   try {
-    const response = await axios.get(`${DEVICE_COMBO_API_URL}/${id}`);
+    const response = await userRequest.get(`${DEVICE_COMBO_API_URL}/${id}`);
     return response.data;
   } catch (error: any) {
     throw error.response?.data || error;
@@ -28,13 +28,14 @@ export async function getDeviceComboById(id: number) {
 }
 export async function getDeviceCombos() {
   try {
-    const response = await axios.get(DEVICE_COMBO_API_URL);
+    const response = await userRequest.get(DEVICE_COMBO_API_URL);
     return response.data;
   } catch (error: any) {
     throw error.response?.data || error;
   }
 }
 import axios from 'axios';
+import { userRequest } from '@/lib/RequestMethods';
 
 const DEVICE_COMBO_API_URL = '/api/v1/device-combos';
 

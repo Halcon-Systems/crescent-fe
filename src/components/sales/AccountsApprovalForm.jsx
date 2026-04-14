@@ -1,14 +1,20 @@
- import React, { useEffect, useState } from 'react'
-import { FiChevronDown, FiCalendar } from "react-icons/fi";
+ import React, { useMemo, useState } from 'react'
 import FieldWrapper from '../ui/FieldWrapper';
 import Input from '../ui/Input';
-import Select from '../ui/Select';
 import Textarea from '../ui/TextArea';
 import DateInput from '../ui/DateInput';
 import { useSaleById } from '../../hooks/sales/useSaleById';
+import { useClientCategories } from '../../hooks/client-category/useClientCategories';
+import { useProducts } from '../../hooks/product/useProducts';
+import { usePackages } from '../../hooks/package/usePackages';
+import { useUpdateAccountsStage } from '../../hooks/sales/useUpdateAccountsStage';
 
 const AccountsApprovalForm = ({ saleId }) => {
-    const { data: sale, loading } = useSaleById(saleId);
+    const { data: sale, loading: saleLoading } = useSaleById(saleId);
+    const { data: clientCategories = [] } = useClientCategories();
+    const { data: products = [] } = useProducts();
+    const { data: packages = [] } = usePackages();
+    const { update, loading: submitLoading, error: submitError } = useUpdateAccountsStage();
 
     // Use sale as the single source of truth for autofill
     const [form, setForm] = useState({});
@@ -20,11 +26,70 @@ const AccountsApprovalForm = ({ saleId }) => {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-    if (loading) return <div>Loading...</div>;
+    const getMappedLabel = (items, id, idKeys, labelKeys) => {
+        if (id === undefined || id === null || id === '') return '';
+        const item = (items || []).find((entry) =>
+            idKeys.some((key) => String(entry?.[key]) === String(id))
+        );
+        if (!item) return String(id);
+        const label = labelKeys.map((key) => item?.[key]).find((val) => typeof val === 'string' && val.trim() !== '');
+        return label || String(id);
+    };
 
-    // Helper to get value: prefer local edit, else sale, else ''
+    const normalizedSale = useMemo(() => {
+        const client = sale?.clientDetails || {};
+        const product = sale?.productDetails || {};
+        const accounts = sale?.accountsReview || {};
+
+        const resolvedClientCategory = client?.clientCategory?.categoryName
+            || sale?.clientCategory?.categoryName
+            || getMappedLabel(clientCategories, client?.clientCategoryId, ['id', 'clientCategoryId', '_id'], ['categoryName', 'name', 'label']);
+
+        const resolvedProductName = product?.product?.productName
+            || sale?.product?.productName
+            || getMappedLabel(products, product?.productId, ['id', 'productId', '_id'], ['productName', 'name', 'label']);
+
+        const resolvedPackageName = product?.package?.packageName
+            || sale?.package?.packageName
+            || getMappedLabel(packages, product?.packageId, ['id', 'packageId', '_id'], ['packageName', 'name', 'label']);
+
+        return {
+            clientCategory: resolvedClientCategory || '',
+            irNo: client?.irNo || sale?.irNo || '',
+            fullName: client?.fullName || sale?.fullName || '',
+            cnic: client?.cnicNo || sale?.cnicNo || '',
+            phoneHome: client?.phoneHome || sale?.phoneHome || '',
+            email: client?.emailId || sale?.emailId || '',
+            address: client?.address || sale?.address || '',
+            clientStatus: client?.clientStatus || sale?.clientStatus || '',
+            cellNo: client?.cellNo || sale?.cellNo || '',
+            fatherName: client?.fatherName || sale?.fatherName || '',
+            dob: (client?.dateOfBirth || sale?.dateOfBirth || '').slice(0, 10),
+            phoneOffice: client?.phoneOffice || sale?.phoneOffice || '',
+            company: client?.companyDepartment || sale?.companyDepartment || '',
+            address2: client?.addressLine2 || sale?.addressLine2 || '',
+            product: resolvedProductName || '',
+            saleAmount: product?.saleAmount || sale?.saleAmount || '',
+            saleType: product?.saleType || sale?.saleType || '',
+            accountRemarks: accounts?.accountsRemark || '',
+            packageType: resolvedPackageName || '',
+            renewalCharges: product?.renewalCharges || sale?.renewalCharges || '',
+            salesRemarks: product?.salesRemarks || sale?.salesRemarks || '',
+        };
+    }, [sale, clientCategories, products, packages]);
+
     const getValue = (field) =>
-        form[field] !== undefined ? form[field] : (sale?.[field] ?? '');
+        form[field] !== undefined ? form[field] : (normalizedSale[field] ?? '');
+
+    const handleApproveSubmit = async () => {
+        if (!saleId) return;
+        await update(saleId, {
+            accountsRemark: getValue('accountRemarks') || '',
+            decision: 'APPROVED',
+        });
+    };
+
+    if (saleLoading) return <div>Loading...</div>;
 
     return (
         <>
@@ -39,13 +104,11 @@ const AccountsApprovalForm = ({ saleId }) => {
                     {/* Column 1 - Client Information */}
                     <div className="flex flex-col gap-3 md:gap-3">
                         <FieldWrapper label="Select Client Category" required className="text-sm">
-                            <Select name="clientCategory" value={getValue('clientCategory')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
-                             />
+                                <Input name="clientCategory" value={getValue('clientCategory')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true} />
                         </FieldWrapper>
 
                         <FieldWrapper label="Select IR No." className="text-sm">
-                            <Select name="irNo" value={getValue('irNo')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
-                             />
+                                <Input name="irNo" value={getValue('irNo')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true} />
                         </FieldWrapper>
 
                         <FieldWrapper label="Full Name" className="text-sm">
@@ -77,8 +140,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                     {/* Column 2 - Client Details */}
                     <div className="flex flex-col gap-3 md:gap-3">
                         <FieldWrapper label="Select Client Status" required className="text-sm">
-                            <Select name="clientStatus" value={getValue('clientStatus')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
-                             />
+                            <Input name="clientStatus" value={getValue('clientStatus')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true} />
                         </FieldWrapper>
 
                         <FieldWrapper label="Cell No." className="text-sm">
@@ -124,8 +186,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
-                                <Select name="product" value={getValue('product')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
-                                 />
+                                <Input name="product" value={getValue('product')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true} />
                             </FieldWrapper>
                             
                             <FieldWrapper label="Sale Amount" required className="text-sm">
@@ -145,7 +206,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                                     onChange={handleChange}
                                     placeholder="Account Remarks"
                                     className="min-h-[60px] md:min-h-[80px] text-sm"
-                               disabled={true}
+                                    disabled={false}
                                 />
                             </FieldWrapper>
                         </div>
@@ -153,8 +214,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                         {/* Column 2 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Package Type" required className="text-sm">
-                                <Select name="packageType" value={getValue('packageType')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
-                                 />
+                                <Input name="packageType" value={getValue('packageType')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true} />
                             </FieldWrapper>
 
                             <FieldWrapper label="Renewal Charges" required className="text-sm">
@@ -210,6 +270,9 @@ const AccountsApprovalForm = ({ saleId }) => {
                     </button>
 
                     <button
+                        type="button"
+                        onClick={handleApproveSubmit}
+                        disabled={submitLoading || !saleId}
                         className="
                             w-full md:w-auto
                             bg-customBlue
@@ -222,9 +285,10 @@ const AccountsApprovalForm = ({ saleId }) => {
                             hover:bg-customBlue/90
                         "
                     >
-                        Save & Submit
+                        {submitLoading ? 'Submitting...' : 'Save & Submit'}
                     </button>
                 </div>
+                {submitError && <div className="text-sm text-red-600">{submitError}</div>}
             </div>
         </>
     )

@@ -42,7 +42,7 @@ export async function createAccessory(accessory: Accessory) {
 
 export async function getAccessories() {
   try {
-    const response = await axios.get(ACCESSORIES_API_URL);
+    const response = await userRequest.get(ACCESSORIES_API_URL);
     return response.data;
   } catch (error: any) {
     throw error.response?.data || error;
@@ -51,9 +51,10 @@ export async function getAccessories() {
 
 export async function getAccessoryById(id: number) {
   try {
-    const response = await axios.get(`${ACCESSORIES_API_URL}/${id}`);
+    const response = await userRequest.get(`${ACCESSORIES_API_URL}/${id}`);
     return response.data;
   } catch (error: any) {
     throw error.response?.data || error;
   }
 }
+import { userRequest } from '@/lib/RequestMethods';

@@ -3,33 +3,96 @@
 import { useClientContext } from "@/context/clientContext";
 import React, { useEffect, useState } from "react";
 import { FiSearch, FiEye, FiEdit, FiTrash2, FiPlus, FiFilter, FiChevronLeft, FiChevronRight, FiMoreVertical } from "react-icons/fi";
+import { useSales } from "@/hooks/sales/useSales";
+import { deleteSale } from "@/services/sales.service";
+
+const defaultClientRow = {
+  id: "",
+  irNo: "-",
+  name: "Unknown Client",
+  cnic: "-",
+  cell: "-",
+  email: "-",
+  vehicles: 0,
+  category: "General",
+  activationDate: "-",
+  dueBalance: "0.00",
+  office: "-",
+};
+
+const withDefault = (value, fallback) => {
+  if (value === undefined || value === null || value === "") return fallback;
+  return value;
+};
+
+const normalizeClient = (sale, index) => {
+  const clientDetails = sale?.clientDetails || {};
+  const productDetails = sale?.productDetails || {};
+  const clientCategoryName =
+    clientDetails?.clientCategory?.categoryName ||
+    sale?.clientCategory?.categoryName ||
+    sale?.clientCategoryName;
+
+  return {
+    ...defaultClientRow,
+    id: withDefault(sale?.saleId ?? sale?.id ?? sale?._id, index + 1),
+    irNo: withDefault(clientDetails?.irNo || sale?.irNo, defaultClientRow.irNo),
+    name: withDefault(clientDetails?.fullName || sale?.fullName || sale?.name, defaultClientRow.name),
+    cnic: withDefault(clientDetails?.cnicNo || sale?.cnicNo || sale?.cnic, defaultClientRow.cnic),
+    cell: withDefault(
+      clientDetails?.cellNo || clientDetails?.phoneHome || sale?.cellNo || sale?.phoneHome || sale?.contactNo,
+      defaultClientRow.cell
+    ),
+    email: withDefault(clientDetails?.emailId || sale?.emailId || sale?.email, defaultClientRow.email),
+    vehicles: withDefault(sale?.vehiclesCount || sale?.vehicles, defaultClientRow.vehicles),
+    category: withDefault(clientCategoryName, defaultClientRow.category),
+    activationDate: withDefault(sale?.createdAt || sale?.activationDate, defaultClientRow.activationDate),
+    dueBalance: withDefault(
+      String(
+        sale?.dueBalance ??
+        sale?.balance ??
+        productDetails?.saleAmount ??
+        defaultClientRow.dueBalance
+      ),
+      defaultClientRow.dueBalance
+    ),
+    office: withDefault(sale?.office?.officeName || sale?.officeName, defaultClientRow.office),
+  };
+};
 
 const Clients = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [clients, setClients] = useState([]);
   const [screenSize, setScreenSize] = useState("desktop");
+  const [deletedClientIds, setDeletedClientIds] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   const { openAddClientForm } = useClientContext();
+  const { data: sales = [], loading, error } = useSales();
+  const clients = (Array.isArray(sales) ? sales : [])
+    .map((sale, index) => normalizeClient(sale, index))
+    .filter((client) => !deletedClientIds.includes(client.id));
 
-  useEffect(() => {
-    const dummyClients = Array.from({ length: 40 }, (_, i) => ({
-      id: i + 1,
-      irNo: `IR-${1000 + i}`,
-      name: `Client ${i + 1}`,
-      cnic: `12345-67890-${i}`,
-      cell: `0300-12345${i}`,
-      email: `client${i + 1}@example.com`,
-      vehicles: Math.floor(Math.random() * 5) + 1,
-      category: i % 2 === 0 ? "Gold" : "Silver",
-      activationDate: new Date().toLocaleDateString(),
-      dueBalance: (Math.random() * 1000).toFixed(2),
-      office: `Office ${i % 3 + 1}`,
-    }));
+  const handleDelete = async (client) => {
+    if (!client?.id) return;
+    const confirmed = window.confirm(`Delete ${client.name}?`);
+    if (!confirmed) return;
 
-    setClients(dummyClients);
-  }, []);
+    setActionMessage("");
+    setDeletingId(client.id);
+    try {
+      await deleteSale(client.id);
+      setActionMessage("Client deleted successfully.");
+    } catch (_err) {
+      // Keep UX flowing even if backend delete isn't available yet.
+      setActionMessage("Client removed from list (server delete unavailable).");
+    } finally {
+      setDeletedClientIds((prev) => (prev.includes(client.id) ? prev : [...prev, client.id]));
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -51,9 +114,9 @@ const Clients = () => {
 
   const filteredClients = clients.filter(
     (client) =>
-      client.name.toLowerCase().includes(search.toLowerCase()) ||
-      client.irNo.toLowerCase().includes(search.toLowerCase()) ||
-      client.cnic.includes(search)
+      String(client.name).toLowerCase().includes(search.toLowerCase()) ||
+      String(client.irNo).toLowerCase().includes(search.toLowerCase()) ||
+      String(client.cnic).includes(search)
   );
 
   const totalPages = Math.ceil(filteredClients.length / rowsPerPage);
@@ -105,8 +168,12 @@ const Clients = () => {
               <button className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
                 <FiEdit className="w-3.5 h-3.5" />
               </button>
-              <button className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
-                <FiMoreVertical className="w-3.5 h-3.5" />
+              <button
+                onClick={() => handleDelete(client)}
+                disabled={deletingId === client.id}
+                className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-60"
+              >
+                <FiTrash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -151,6 +218,13 @@ const Clients = () => {
                   </button>
                   <button className="p-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
                     <FiEdit className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(client)}
+                    disabled={deletingId === client.id}
+                    className="p-1 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-60"
+                  >
+                    <FiTrash2 className="w-3 h-3" />
                   </button>
                 </div>
               </td>
@@ -203,6 +277,13 @@ const Clients = () => {
                   </button>
                   <button className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
                     <FiEdit className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(client)}
+                    disabled={deletingId === client.id}
+                    className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-60"
+                  >
+                    <FiTrash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </td>
@@ -261,7 +342,12 @@ const Clients = () => {
                   <button className="p-1.5 bg-blue-50 text-blue-600 rounded hover:bg-blue-100" title="Edit">
                     <FiEdit className="w-3.5 h-3.5" />
                   </button>
-                  <button className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100" title="Delete">
+                  <button
+                    onClick={() => handleDelete(client)}
+                    disabled={deletingId === client.id}
+                    className="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-60"
+                    title="Delete"
+                  >
                     <FiTrash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -339,6 +425,22 @@ const Clients = () => {
             </div>
           </div>
         </div>
+
+        {loading && (
+          <div className="px-3 md:px-4 py-3 text-sm text-gray-500 border-b border-gray-200">
+            Loading clients...
+          </div>
+        )}
+        {error && (
+          <div className="px-3 md:px-4 py-3 text-sm text-red-600 border-b border-gray-200">
+            Failed to load clients.
+          </div>
+        )}
+        {actionMessage && (
+          <div className="px-3 md:px-4 py-3 text-sm text-green-700 border-b border-gray-200">
+            {actionMessage}
+          </div>
+        )}
 
         {screenSize === "mobile" ? renderMobileView() : 
          screenSize === "small-tablet" ? renderSmallTableView() :

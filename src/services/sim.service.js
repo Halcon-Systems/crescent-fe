@@ -20,7 +20,7 @@ export async function updateSim(id, sim) {
 }
 export async function getSimById(id) {
 	try {
-		const response = await axios.get(`${SIMS_API_URL}/${id}`);
+		const response = await userRequest.get(`${SIMS_API_URL}/${id}`);
 		return response.data;
 	} catch (error) {
 		throw error.response?.data || error;
@@ -28,13 +28,14 @@ export async function getSimById(id) {
 }
 export async function getSims() {
 	try {
-		const response = await axios.get(SIMS_API_URL);
+		const response = await userRequest.get(SIMS_API_URL);
 		return response.data;
 	} catch (error) {
 		throw error.response?.data || error;
 	}
 }
 import axios from 'axios';
+import { userRequest } from '@/lib/RequestMethods';
 
 const SIMS_API_URL = '/api/v1/sims';
 
