@@ -12,17 +12,17 @@ import { useProducts } from '../../hooks/product/useProducts';
 import { usePackages } from '../../hooks/package/usePackages';
 
 const initialForm = {
-    clientCategory: '',
+    clientCategoryId: '',
     irNo: '',
     fullName: '',
-    cnic: '',
+    cnicNo: '',
     phoneHome: '',
     email: '',
     address: '',
     clientStatus: '',
     cellNo: '',
     fatherName: '',
-    dob: '',
+    dateOfBirth: '',
     phoneOffice: '',
     company: '',
     address2: '',
