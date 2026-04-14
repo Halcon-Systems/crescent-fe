@@ -17,21 +17,23 @@ const initialForm = {
     fullName: '',
     cnicNo: '',
     phoneHome: '',
-    email: '',
+    emailId: '',
     address: '',
     clientStatus: '',
     cellNo: '',
     fatherName: '',
     dateOfBirth: '',
     phoneOffice: '',
-    company: '',
-    address2: '',
-    product: '',
+    companyDepartment: '',
+    addressLine2: '',
+    productId: '',
     saleAmount: '',
     saleType: '',
-    packageType: '',
+    packageId: '',
     renewalCharges: '',
+    customTypeValue: '',
     salesRemarks: '',
+    submitToAccounts: false,
 };
 
 const AddNewSaleForm = ({ onSuccess }) => {
@@ -50,9 +52,32 @@ const AddNewSaleForm = ({ onSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const sale = await create(form);
+            const payload = {
+                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 0,
+                irNo: form.irNo,
+                fullName: form.fullName,
+                cnicNo: form.cnicNo,
+                phoneHome: form.phoneHome,
+                emailId: form.emailId,
+                address: form.address,
+                clientStatus: form.clientStatus,
+                cellNo: form.cellNo,
+                fatherName: form.fatherName,
+                dateOfBirth: form.dateOfBirth,
+                phoneOffice: form.phoneOffice,
+                companyDepartment: form.companyDepartment,
+                addressLine2: form.addressLine2,
+                productId: form.productId ? parseInt(form.productId) : 0,
+                saleAmount: form.saleAmount ? parseInt(form.saleAmount) : 0,
+                saleType: form.saleType.toUpperCase() || 'CREDIT',
+                packageId: form.packageId ? parseInt(form.packageId) : 0,
+                renewalCharges: form.renewalCharges ? parseInt(form.renewalCharges) : 0,
+                customTypeValue: form.customTypeValue ? parseInt(form.customTypeValue) : 0,
+                salesRemarks: form.salesRemarks,
+                submitToAccounts: form.submitToAccounts,
+            };
+            const sale = await create(payload);
             if (onSuccess && sale) onSuccess(sale);
-            // Optionally reset form or show success
         } catch (err) {
             // Error handled by hook
         }
@@ -72,18 +97,17 @@ const AddNewSaleForm = ({ onSuccess }) => {
                     <div className="flex flex-col gap-3 md:gap-3">
                         <FieldWrapper label="Select Client Category" required className="text-sm">
                             <Select
-                                name="clientCategory"
-                                value={form.clientCategory}
+                                name="clientCategoryId"
+                                value={form.clientCategoryId}
                                 onChange={handleChange}
                                 placeholder={loadingCategories ? "Loading client categories..." : "Choose client category"}
                                 className="text-sm py-2"
                                 options={
                                     clientCategories?.map(cat => ({
-                                        value: cat.id || cat._id || cat.value || cat.categoryName,
+                                        value: cat.id || cat._id || cat.value || cat.clientCategoryId,
                                         label: cat.categoryName || cat.label || cat.name
                                     })) || []
                                 }
-                                disabled={loadingCategories}
                             />
                         </FieldWrapper>
 
@@ -103,18 +127,18 @@ const AddNewSaleForm = ({ onSuccess }) => {
                             />
                         </FieldWrapper>
 
-                        <FieldWrapper label="Full Name" className="text-sm">
+                        <FieldWrapper label="Full Name" required className="text-sm">
                             <Input name="fullName" value={form.fullName} onChange={handleChange} placeholder="Enter full name" className="text-sm py-2" />
                         </FieldWrapper>
 
-                        <FieldWrapper label="CNIC No." className="text-sm">
+                        <FieldWrapper label="CNIC No." required className="text-sm">
                             <Input
-                                name="cnic"
-                                value={form.cnic}
+                                name="cnicNo"
+                                value={form.cnicNo}
                                 onChange={e => {
                                     let val = e.target.value.replace(/[^0-9]/g, '');
                                     if (val.length > 13) val = val.slice(0, 13);
-                                    handleChange({ target: { name: 'cnic', value: val } });
+                                    handleChange({ target: { name: 'cnicNo', value: val } });
                                 }}
                                 placeholder="Enter 13-digit CNIC (without dashes)"
                                 className="text-sm py-2"
@@ -137,8 +161,8 @@ const AddNewSaleForm = ({ onSuccess }) => {
                             />
                         </FieldWrapper>
 
-                        <FieldWrapper label="Email ID" className="text-sm">
-                            <Input name="email" value={form.email} onChange={handleChange} placeholder="Enter email address" className="text-sm py-2" />
+                        <FieldWrapper label="Email ID" required className="text-sm">
+                            <Input name="emailId" value={form.emailId} onChange={handleChange} placeholder="Enter email address" className="text-sm py-2" type="email" />
                         </FieldWrapper>
 
                         <FieldWrapper label="Address" className="text-sm">
@@ -184,7 +208,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
                         </FieldWrapper>
 
                         <FieldWrapper label="Date of Birth" className="text-sm">
-                            <DateInput name="dob" value={form.dob} onChange={handleChange} placeholder="Select date of birth" className="text-sm py-2" />
+                            <DateInput name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} placeholder="Select date of birth" className="text-sm py-2" />
                         </FieldWrapper>
 
                         <FieldWrapper label="Phone Office" className="text-sm">
@@ -203,11 +227,11 @@ const AddNewSaleForm = ({ onSuccess }) => {
                         </FieldWrapper>
 
                         <FieldWrapper label="Company/ Department" className="text-sm">
-                            <Input name="company" value={form.company} onChange={handleChange} placeholder="Enter company or department" className="text-sm py-2" />
+                            <Input name="companyDepartment" value={form.companyDepartment} onChange={handleChange} placeholder="Enter company or department" className="text-sm py-2" />
                         </FieldWrapper>
                         
                         <FieldWrapper label="Address Line 2" className="text-sm">
-                            <Input name="address2" value={form.address2} onChange={handleChange} placeholder="Enter address line 2" className="text-sm py-2" />
+                            <Input name="addressLine2" value={form.addressLine2} onChange={handleChange} placeholder="Enter address line 2" className="text-sm py-2" />
                         </FieldWrapper>
                     </div>
                 </div>
@@ -224,14 +248,14 @@ const AddNewSaleForm = ({ onSuccess }) => {
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
                                 <Select
-                                    name="product"
-                                    value={form.product}
+                                    name="productId"
+                                    value={form.productId}
                                     onChange={handleChange}
                                     placeholder={loadingProducts ? "Loading products..." : "Choose product"}
                                     className="text-sm py-2"
                                     options={
                                         products?.map(prod => ({
-                                            value: prod.id || prod._id || prod.value || prod.productName,
+                                            value: (prod.id || prod._id || prod.value || prod.productId).toString(),
                                             label: prod.productName || prod.label || prod.name
                                         })) || []
                                     }
@@ -274,14 +298,14 @@ const AddNewSaleForm = ({ onSuccess }) => {
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Package Type" required className="text-sm">
                                 <Select
-                                    name="packageType"
-                                    value={form.packageType}
+                                    name="packageId"
+                                    value={form.packageId}
                                     onChange={handleChange}
                                     placeholder={loadingPackages ? "Loading packages..." : "Choose package type"}
                                     className="text-sm py-2"
                                     options={
                                         packages?.map(pkg => ({
-                                            value: pkg.id || pkg._id || pkg.value || pkg.packageName,
+                                            value: (pkg.id || pkg._id || pkg.value || pkg.packageId).toString(),
                                             label: pkg.packageName || pkg.label || pkg.name
                                         })) || []
                                     }
@@ -314,6 +338,21 @@ const AddNewSaleForm = ({ onSuccess }) => {
                             </FieldWrapper>
                         </div>
                     </div>
+                </div>
+
+                {/* Submit to Accounts Checkbox */}
+                <div className="flex items-center gap-2 mt-6">
+                    <input
+                        type="checkbox"
+                        id="submitToAccounts"
+                        name="submitToAccounts"
+                        checked={form.submitToAccounts}
+                        onChange={(e) => handleChange({ target: { name: 'submitToAccounts', value: e.target.checked } })}
+                        className="cursor-pointer"
+                    />
+                    <label htmlFor="submitToAccounts" className="cursor-pointer text-sm text-gray-700">
+                        Submit to Accounts
+                    </label>
                 </div>
 
                 {/* Buttons Section */}
