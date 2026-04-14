@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiChevronDown, FiCalendar } from "react-icons/fi";
 import FieldWrapper from '../ui/FieldWrapper';
 import Input from '../ui/Input';
@@ -10,6 +10,7 @@ import { useCreateSale } from '../../hooks/sales/useUpdateSalesStage';
 import { useClientCategories } from '../../hooks/client-category/useClientCategories';
 import { useProducts } from '../../hooks/product/useProducts';
 import { usePackages } from '../../hooks/package/usePackages';
+import { Key } from 'lucide-react';
 
 const initialForm = {
     clientCategoryId: '',
@@ -33,7 +34,7 @@ const initialForm = {
     renewalCharges: '',
     customTypeValue: '',
     salesRemarks: '',
-    submitToAccounts: false,
+    submitToAccounts: true,
 };
 
 const AddNewSaleForm = ({ onSuccess }) => {
@@ -53,7 +54,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
         e.preventDefault();
         try {
             const payload = {
-                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 0,
+                clientCategoryId: form.clientCategoryId ? parseInt(form.clientCategoryId) : 1,
                 irNo: form.irNo,
                 fullName: form.fullName,
                 cnicNo: form.cnicNo,
@@ -83,6 +84,32 @@ const AddNewSaleForm = ({ onSuccess }) => {
         }
     };
 
+    useEffect(()=>{
+        console.log(form);
+    },[form])
+
+    // Create option arrays
+    const clientCategoryOptions = clientCategories && clientCategories.length > 0
+        ? clientCategories.map(cat => ({
+            value: String(cat.id || cat._id || cat.value || cat.clientCategoryId),
+            label: cat.categoryName || cat.label || cat.name
+        }))
+        : [];
+
+    const productOptions = products && products.length > 0
+        ? products.map(prod => ({
+            value: String(prod.id || prod._id || prod.value || prod.productId),
+            label: prod.productName || prod.label || prod.name
+        }))
+        : [];
+
+    const packageOptions = packages && packages.length > 0
+        ? packages.map(pkg => ({
+            value: String(pkg.id || pkg._id || pkg.value || pkg.packageId),
+            label: pkg.packageName || pkg.label || pkg.name
+        }))
+        : [];
+
     return (
         <form onSubmit={handleSubmit}>
             <div className="flex-1 flex flex-col gap-3 md:gap-4">
@@ -102,12 +129,8 @@ const AddNewSaleForm = ({ onSuccess }) => {
                                 onChange={handleChange}
                                 placeholder={loadingCategories ? "Loading client categories..." : "Choose client category"}
                                 className="text-sm py-2"
-                                options={
-                                    clientCategories?.map(cat => ({
-                                        value: cat.id || cat._id || cat.value || cat.clientCategoryId,
-                                        label: cat.categoryName || cat.label || cat.name
-                                    })) || []
-                                }
+                                disabled={false}
+                                options={clientCategoryOptions}
                             />
                         </FieldWrapper>
 
@@ -253,12 +276,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
                                     onChange={handleChange}
                                     placeholder={loadingProducts ? "Loading products..." : "Choose product"}
                                     className="text-sm py-2"
-                                    options={
-                                        products?.map(prod => ({
-                                            value: (prod.id || prod._id || prod.value || prod.productId).toString(),
-                                            label: prod.productName || prod.label || prod.name
-                                        })) || []
-                                    }
+                                    options={productOptions}
                                     disabled={loadingProducts}
                                 />
                             </FieldWrapper>
@@ -303,12 +321,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
                                     onChange={handleChange}
                                     placeholder={loadingPackages ? "Loading packages..." : "Choose package type"}
                                     className="text-sm py-2"
-                                    options={
-                                        packages?.map(pkg => ({
-                                            value: (pkg.id || pkg._id || pkg.value || pkg.packageId).toString(),
-                                            label: pkg.packageName || pkg.label || pkg.name
-                                        })) || []
-                                    }
+                                    options={packageOptions}
                                     disabled={loadingPackages}
                                 />
                             </FieldWrapper>
@@ -340,21 +353,7 @@ const AddNewSaleForm = ({ onSuccess }) => {
                     </div>
                 </div>
 
-                {/* Submit to Accounts Checkbox */}
-                <div className="flex items-center gap-2 mt-6">
-                    <input
-                        type="checkbox"
-                        id="submitToAccounts"
-                        name="submitToAccounts"
-                        checked={form.submitToAccounts}
-                        onChange={(e) => handleChange({ target: { name: 'submitToAccounts', value: e.target.checked } })}
-                        className="cursor-pointer"
-                    />
-                    <label htmlFor="submitToAccounts" className="cursor-pointer text-sm text-gray-700">
-                        Submit to Accounts
-                    </label>
-                </div>
-
+               
                 {/* Buttons Section */}
                 <div className="flex flex-col md:flex-row justify-between gap-3 mt-6 md:mt-8">
                     {/* Credit Check Button */}

@@ -42,7 +42,7 @@ const Select = ({
       {/* Dropdown trigger button */}
       <button
         type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         className={`w-full min-h-10 flex items-center justify-between py-2  rounded-lg transition-colors ${
           disabled 

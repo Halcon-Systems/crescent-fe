@@ -164,11 +164,6 @@ userRequest.interceptors.response.use(
                 if (typeof window !== 'undefined' && window.toast) {
                     window.toast.error('Access denied');
                 }
-                if (typeof window !== 'undefined') {
-                    if (!window.location.pathname.startsWith('/login')) {
-                        window.location.href = '/client-dashboard';
-                    }
-                }
                 break;
             case 500:
                 console.error('Server error:', safeErrorDetails);
