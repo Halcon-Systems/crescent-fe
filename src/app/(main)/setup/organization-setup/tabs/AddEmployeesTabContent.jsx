@@ -5,6 +5,7 @@ import { useEmployees } from "@/hooks/employee/useEmployees";
 import { useCreateEmployee } from "@/hooks/employee/useCreateEmployee";
 import { useUpdateEmployee } from "@/hooks/employee/useUpdateEmployee";
 import { useDeleteEmployee } from "@/hooks/employee/useDeleteEmployee";
+import { useCreateRole } from "@/hooks/users/useCreateRole";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import FormActions from "../components/FormActions";
@@ -38,10 +39,8 @@ const EmployeeTabContent = () => {
   const [viewItem, setViewItem] = useState(null);
   const [localEmployees, setLocalEmployees] = useState([]);
 
-  const [username, setUsername] = useState("");
-  const [userRole, setUserRole] = useState("");
-  const [tempPass, setTempPass] = useState("");
-  const [retypeTempPass, setRetypeTempPass] = useState("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [userRoleId, setUserRoleId] = useState("");
 
   const { data, isLoading, error, isFetching, isPending, refetch } =
     useEmployees();
@@ -70,6 +69,13 @@ const EmployeeTabContent = () => {
       setSuccessModal({ isOpen: true, message: "Employee created successfully" });
       resetForm();
       refetch();
+    },
+  });
+
+  const { mutate: createRole, isPending: isCreatingRole } = useCreateRole({
+    onSuccess: () => {
+      setSuccessModal({ isOpen: true, message: "User role assigned successfully" });
+      resetUserRightsForm();
     },
   });
 
@@ -113,10 +119,8 @@ const EmployeeTabContent = () => {
   };
 
   const resetUserRightsForm = () => {
-    setUsername("");
-    setUserRole("");
-    setTempPass("");
-    setRetypeTempPass("");
+    setSelectedEmployeeId("");
+    setUserRoleId("");
   };
 
   const validateCreateEmployee = () => {
@@ -127,10 +131,6 @@ const EmployeeTabContent = () => {
     if (!designation.trim()) errors.push("Designations");
     if (!nextOfKin.trim()) errors.push("Next of Kin");
     if (!nextOfKinContact.trim()) errors.push("Next of Kin Contact");
-    if (!username.trim()) errors.push("Username");
-    if (!userRole.trim()) errors.push("Assign Role");
-    if (!tempPass.trim()) errors.push("Temporary Password");
-    if (!retypeTempPass.trim()) errors.push("Retype Temporary Password");
     return errors;
   };
 
@@ -218,16 +218,18 @@ const EmployeeTabContent = () => {
 
   const handleAssignUserRights = () => {
     const errors = [];
-    if (!username.trim()) errors.push("Username");
-    if (!userRole.trim()) errors.push("Assign Role");
-    if (!tempPass.trim()) errors.push("Temporary Password");
-    if (!retypeTempPass.trim()) errors.push("Retype Temporary Password");
+    if (!selectedEmployeeId) errors.push("Employee");
+    if (!userRoleId) errors.push("Role");
     if (errors.length > 0) {
       setValidationErrors(errors);
       setShowValidationError(true);
       return false;
     }
-    alert(`Assigning role "${userRole}" to username "${username}" with temporary password.`);
+    createRole({
+      userId: parseInt(selectedEmployeeId),
+      roleId: parseInt(userRoleId),
+      assignedByUserId: 1,
+    });
   }
 
   const handleViewEmployee = (item) => {
@@ -355,49 +357,33 @@ const EmployeeTabContent = () => {
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           <div className="space-y-1">
-            <FieldWrapper label="Username" required className="text-sm">
-              <Input
-                placeholder="Type user name here"
-                className="text-sm py-2"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+            <FieldWrapper label="Employee" required className="text-sm">
+              <Select
+                name="selectedEmployeeId"
+                value={selectedEmployeeId}
+                onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                placeholder="Select Employee"
+                options={localEmployees.map((emp) => ({
+                  value: emp.id.toString(),
+                  label: emp.email,
+                }))}
+                className="text-sm"
               />
             </FieldWrapper>
           </div>
 
           <div className="space-y-1">
             <FieldWrapper label="Assign Role" required className="text-sm">
-              <Input
-                placeholder="Type user name here"
-                className="text-sm py-2"
-                type="text"
-                value={userRole}
-                onChange={(e) => setUserRole(e.target.value)}
-              />
-            </FieldWrapper>
-          </div>
-
-            <div className="space-y-1">
-            <FieldWrapper label="Temporary Password" required className="text-sm">
-              <Input
-                placeholder="Type temporary password here"
-                className="text-sm py-2"
-                type="password"
-                value={tempPass}
-                onChange={(e) => setTempPass(e.target.value)}
-              />
-            </FieldWrapper>
-          </div>
-
-          <div className="space-y-1">
-            <FieldWrapper label="Retype Temporary Password" required className="text-sm">
-              <Input
-                placeholder="Retype temporary password here"
-                className="text-sm py-2"
-                type="password"
-                value={retypeTempPass}
-                onChange={(e) => setRetypeTempPass(e.target.value)}
+              <Select
+                name="userRoleId"
+                value={userRoleId}
+                onChange={(e) => setUserRoleId(e.target.value)}
+                placeholder="Select Role"
+                options={[
+                  { value: "1", label: "System Administrator" },
+                  { value: "2", label: "Admin" },
+                ]}
+                className="text-sm"
               />
             </FieldWrapper>
           </div>
@@ -407,6 +393,8 @@ const EmployeeTabContent = () => {
             onSave={handleAssignUserRights}
             onCancel={resetUserRightsForm}
             tabName="Employee"
+            isLoading={isCreatingRole}
+            showAutoSuccess={false}
           />
           
       </div>

@@ -131,7 +131,7 @@ const SearchList = ({
     if (onView) onView(item, index);
   };
 
-  console.log("Filtered & Sorted Items:", filteredItems);
+  // console.log("Filtered & Sorted Items:", filteredItems);
 
   return (
     <div className="relative">
@@ -189,7 +189,7 @@ const SearchList = ({
                 />
                 <span className="text-sm text-gray-700">All Items</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="filter"
@@ -202,7 +202,7 @@ const SearchList = ({
                   Active Only
                 </span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="filter"
@@ -225,7 +225,7 @@ const SearchList = ({
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Sort By</h4>
             <div className="space-y-2">
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="sort"
@@ -235,7 +235,7 @@ const SearchList = ({
                 />
                 <span className="text-sm text-gray-700">Default</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="sort"
@@ -245,7 +245,7 @@ const SearchList = ({
                 />
                 <span className="text-sm text-gray-700">A to Z</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="sort"
@@ -255,7 +255,7 @@ const SearchList = ({
                 />
                 <span className="text-sm text-gray-700">Z to A</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="sort"
@@ -265,7 +265,7 @@ const SearchList = ({
                 />
                 <span className="text-sm text-gray-700">Active First</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition">
+              <label className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 py-0 rounded-lg transition">
                 <input
                   type="radio"
                   name="sort"

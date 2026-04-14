@@ -241,12 +241,12 @@ const AddProductsTabContent = () => {
       />
 
       {/* Success Modal */}
-      <SuccessModal
+      {/* <SuccessModal
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal({ isOpen: false, message: "" })}
         title="Success"
         message={successModal.message}
-      />
+      /> */}
     </div>
   );
 };

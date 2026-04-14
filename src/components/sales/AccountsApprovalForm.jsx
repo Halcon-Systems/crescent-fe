@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+ import React, { useEffect, useState } from 'react'
 import { FiChevronDown, FiCalendar } from "react-icons/fi";
 import FieldWrapper from '../ui/FieldWrapper';
 import Input from '../ui/Input';
@@ -39,62 +39,76 @@ const AccountsApprovalForm = ({ saleId }) => {
                     {/* Column 1 - Client Information */}
                     <div className="flex flex-col gap-3 md:gap-3">
                         <FieldWrapper label="Select Client Category" required className="text-sm">
-                            <Select name="clientCategory" value={getValue('clientCategory')} onChange={handleChange} placeholder="Select" className="text-sm py-2" />
+                            <Select name="clientCategory" value={getValue('clientCategory')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Select IR No." className="text-sm">
-                            <Select name="irNo" value={getValue('irNo')} onChange={handleChange} placeholder="Select" className="text-sm py-2" />
+                            <Select name="irNo" value={getValue('irNo')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Full Name" className="text-sm">
-                            <Input name="fullName" value={getValue('fullName')} onChange={handleChange} placeholder="Full Name" className="text-sm py-2" />
+                            <Input name="fullName" value={getValue('fullName')} onChange={handleChange} placeholder="Full Name" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="CNIC No." className="text-sm">
-                            <Input name="cnic" value={getValue('cnic')} onChange={handleChange} placeholder="CNIC No." className="text-sm py-2" />
+                            <Input name="cnic" value={getValue('cnic')} onChange={handleChange} placeholder="CNIC No." className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
                         
                         <FieldWrapper label="Phone Home" className="text-sm">
-                            <Input name="phoneHome" value={getValue('phoneHome')} onChange={handleChange} placeholder="Phone Home" className="text-sm py-2" />
+                            <Input name="phoneHome" value={getValue('phoneHome')} onChange={handleChange} placeholder="Phone Home" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Email ID" className="text-sm">
-                            <Input name="email" value={getValue('email')} onChange={handleChange} placeholder="Email ID" className="text-sm py-2" />
+                            <Input name="email" value={getValue('email')} onChange={handleChange} placeholder="Email ID" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Address" className="text-sm">
-                            <Input name="address" value={getValue('address')} onChange={handleChange} placeholder="Address" className="text-sm py-2" />
+                            <Input name="address" value={getValue('address')} onChange={handleChange} placeholder="Address" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
                     </div>
 
                     {/* Column 2 - Client Details */}
                     <div className="flex flex-col gap-3 md:gap-3">
                         <FieldWrapper label="Select Client Status" required className="text-sm">
-                            <Select name="clientStatus" value={getValue('clientStatus')} onChange={handleChange} placeholder="Select" className="text-sm py-2" />
+                            <Select name="clientStatus" value={getValue('clientStatus')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Cell No." className="text-sm">
-                            <Input name="cellNo" value={getValue('cellNo')} onChange={handleChange} placeholder="Cell No." className="text-sm py-2" />
+                            <Input name="cellNo" value={getValue('cellNo')} onChange={handleChange} placeholder="Cell No." className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Father Name" className="text-sm">
-                            <Input name="fatherName" value={getValue('fatherName')} onChange={handleChange} placeholder="Father Name" className="text-sm py-2" />
+                            <Input name="fatherName" value={getValue('fatherName')} onChange={handleChange} placeholder="Father Name" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Date of Birth" className="text-sm">
-                            <DateInput name="dob" value={getValue('dob')} onChange={handleChange} placeholder="Date of Birth" className="text-sm py-2" />
+                            <DateInput name="dob" value={getValue('dob')} onChange={handleChange} placeholder="Date of Birth" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Phone Office" className="text-sm">
-                            <Input name="phoneOffice" value={getValue('phoneOffice')} onChange={handleChange} placeholder="Phone Office" className="text-sm py-2" />
+                            <Input name="phoneOffice" value={getValue('phoneOffice')} onChange={handleChange} placeholder="Phone Office" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
 
                         <FieldWrapper label="Company/ Department" className="text-sm">
-                            <Input name="company" value={getValue('company')} onChange={handleChange} placeholder="Company/Department" className="text-sm py-2" />
+                            <Input name="company" value={getValue('company')} onChange={handleChange} placeholder="Company/Department" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
                         
                         <FieldWrapper label="Address Line 2" className="text-sm">
-                            <Input name="address2" value={getValue('address2')} onChange={handleChange} placeholder="Address Line 2" className="text-sm py-2" />
+                            <Input name="address2" value={getValue('address2')} onChange={handleChange} placeholder="Address Line 2" className="text-sm py-2"disabled={true}
+                             />
                         </FieldWrapper>
                     </div>
                 </div>
@@ -110,15 +124,18 @@ const AccountsApprovalForm = ({ saleId }) => {
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
-                                <Select name="product" value={getValue('product')} onChange={handleChange} placeholder="Select" className="text-sm py-2" />
+                                <Select name="product" value={getValue('product')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
+                                 />
                             </FieldWrapper>
                             
                             <FieldWrapper label="Sale Amount" required className="text-sm">
-                                <Input name="saleAmount" value={getValue('saleAmount')} onChange={handleChange} placeholder="Sale Amount" className="text-sm py-2" />
+                                <Input name="saleAmount" value={getValue('saleAmount')} onChange={handleChange} placeholder="Sale Amount" className="text-sm py-2"disabled={true}
+                                 />
                             </FieldWrapper>
                             
                             <FieldWrapper label="Sale Type" required className="text-sm">
-                                <Input name="saleType" value={getValue('saleType')} onChange={handleChange} placeholder="Sale Type" className="text-sm py-2" />
+                                <Input name="saleType" value={getValue('saleType')} onChange={handleChange} placeholder="Sale Type" className="text-sm py-2"disabled={true}
+                                 />
                             </FieldWrapper>
                             
                             <FieldWrapper label="Account Remarks" className="text-sm">
@@ -128,6 +145,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                                     onChange={handleChange}
                                     placeholder="Account Remarks"
                                     className="min-h-[60px] md:min-h-[80px] text-sm"
+                               disabled={true}
                                 />
                             </FieldWrapper>
                         </div>
@@ -135,11 +153,13 @@ const AccountsApprovalForm = ({ saleId }) => {
                         {/* Column 2 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Package Type" required className="text-sm">
-                                <Select name="packageType" value={getValue('packageType')} onChange={handleChange} placeholder="Select" className="text-sm py-2" />
+                                <Select name="packageType" value={getValue('packageType')} onChange={handleChange} placeholder="Select" className="text-sm py-2"disabled={true}
+                                 />
                             </FieldWrapper>
 
                             <FieldWrapper label="Renewal Charges" required className="text-sm">
-                                <Input name="renewalCharges" value={getValue('renewalCharges')} onChange={handleChange} placeholder="Renewal Charges" className="text-sm py-2" />
+                                <Input name="renewalCharges" value={getValue('renewalCharges')} onChange={handleChange} placeholder="Renewal Charges" className="text-sm py-2"disabled={true}
+                                 />
                             </FieldWrapper>
 
                             <FieldWrapper label="Sales Remarks" className="text-sm">
@@ -149,6 +169,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                                     onChange={handleChange}
                                     placeholder="Sales Remarks"
                                     className="min-h-[60px] md:min-h-[80px] text-sm"
+                                    disabled={true}
                                 />
                             </FieldWrapper>
                         </div>
@@ -157,6 +178,21 @@ const AccountsApprovalForm = ({ saleId }) => {
 
                 {/* Buttons Section */}
                 <div className="flex flex-col md:flex-row justify-end gap-3 mt-6 md:mt-8">
+                    <button
+                        className="
+                            w-full md:w-auto
+                            bg-yellow-600
+                            text-gray-100
+                            px-4 py-2
+                            rounded-lg
+                            cursor-pointer
+                            text-sm font-medium
+                            transition
+                            hover:bg-yellow-700
+                        "
+                    >
+                        Hold
+                    </button>
                     <button
                         className="
                             w-full md:w-auto
@@ -170,7 +206,7 @@ const AccountsApprovalForm = ({ saleId }) => {
                             hover:bg-red-700
                         "
                     >
-                        Hold
+                        Reject
                     </button>
 
                     <button

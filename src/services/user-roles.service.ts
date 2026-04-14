@@ -1,6 +1,6 @@
 			import { userRequest } from '@/lib/RequestMethods';
 
-			const API_BASE = '/api/v1/roles';
+			const API_BASE = '/api/v1/user-roles';
 
 			export interface CreateRolePayload {
 				roleName: string;
