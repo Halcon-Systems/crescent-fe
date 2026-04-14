@@ -1,4 +1,5 @@
- import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation';
 import FieldWrapper from '../ui/FieldWrapper';
 import Input from '../ui/Input';
 import Textarea from '../ui/TextArea';
@@ -10,6 +11,7 @@ import { usePackages } from '../../hooks/package/usePackages';
 import { useUpdateAccountsStage } from '../../hooks/sales/useUpdateAccountsStage';
 
 const AccountsApprovalForm = ({ saleId }) => {
+    const router = useRouter();
     const { data: sale, loading: saleLoading } = useSaleById(saleId);
     const { data: clientCategories = [] } = useClientCategories();
     const { data: products = [] } = useProducts();
@@ -43,7 +45,7 @@ const AccountsApprovalForm = ({ saleId }) => {
 
         const resolvedClientCategory = client?.clientCategory?.categoryName
             || sale?.clientCategory?.categoryName
-            || getMappedLabel(clientCategories, client?.clientCategoryId, ['id', 'clientCategoryId', '_id'], ['categoryName', 'name', 'label']);
+            || getMappedLabel(clientCategories, client?.clientCategoryId, ['id', 'clientCategoryId', 'categoryId', '_id'], ['categoryName', 'name', 'label']);
 
         const resolvedProductName = product?.product?.productName
             || sale?.product?.productName
@@ -87,6 +89,8 @@ const AccountsApprovalForm = ({ saleId }) => {
             accountsRemark: getValue('accountRemarks') || '',
             decision: 'APPROVED',
         });
+        // Navigate to Operation Process page after successful approval
+        router.push('/main/operation-process');
     };
 
     if (saleLoading) return <div>Loading...</div>;

@@ -45,6 +45,11 @@ const AddNewSaleForm = ({ onSuccess }) => {
     const { data: products, isLoading: loadingProducts } = useProducts();
     const { data: packages, isLoading: loadingPackages } = usePackages();
 
+    // Debug: Log clientCategories data
+    useEffect(() => {
+        console.log('clientCategories from API:', clientCategories);
+    }, [clientCategories]);
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -97,9 +102,9 @@ const AddNewSaleForm = ({ onSuccess }) => {
     // Create option arrays
     const clientCategoryOptions = clientCategories && clientCategories.length > 0
         ? clientCategories.map(cat => ({
-            value: String(cat.id ?? cat._id ?? cat.value ?? cat.clientCategoryId ?? ''),
-            label: cat.categoryName || cat.label || cat.name
-        })).filter((opt) => opt.value !== '' && opt.value !== 'undefined' && opt.value !== 'null')
+            value: String(cat.categoryId),
+            label: cat.categoryName
+        }))
         : [];
 
     const productOptions = products && products.length > 0
