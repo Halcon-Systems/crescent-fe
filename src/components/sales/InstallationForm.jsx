@@ -1,23 +1,11 @@
+"use client";
+import { useRouter } from "next/navigation";
 import { useZones } from "@/hooks/zone/useZones";
 import { useDeviceCombos } from "@/hooks/device-combo/useDeviceCombos";
 import { useSims } from "@/hooks/sims/useSims";
 import { useAccessories } from "@/hooks/accessories/useAccessories";
 import { useDevices } from "@/hooks/devices/useDevices";
 import { useEmployees } from "@/hooks/employee/useEmployees";
-    const { data: zones = [] } = useZones();
-    const { data: combos = [] } = useDeviceCombos();
-    const { data: sims = [] } = useSims();
-    const { data: accessories = [] } = useAccessories();
-    const { data: devices = [] } = useDevices();
-    const { data: employees = [] } = useEmployees();
-    // Map options for selects
-    const zoneOptions = useMemo(() => mapOptions(zones, ["id", "zoneId"], ["zoneName", "name"]), [zones]);
-    const comboOptions = useMemo(() => mapOptions(combos, ["id", "deviceComboId"], ["comboName", "name"]), [combos]);
-    const simOptions = useMemo(() => mapOptions(sims, ["id", "simId"], ["simName", "name"]), [sims]);
-    const accessoryOptions = useMemo(() => mapOptions(accessories, ["id", "accessoryId"], ["accessoryName", "name"]), [accessories]);
-"use client";
-    const deviceOptions = useMemo(() => mapOptions(devices, ["id", "deviceId"], ["deviceName", "name"]), [devices]);
-    const technicianOptions = useMemo(() => mapOptions(employees, ["userId", "id"], ["emailId", "name", "cnic"]), [employees]);
 import { useProducts } from "@/hooks/product/useProducts";
 import { usePackages } from "@/hooks/package/usePackages";
 import React, { useEffect, useMemo, useState } from "react";
@@ -45,6 +33,20 @@ const mapOptions = (items, idKeys, labelKeys) =>
     }).filter((opt) => opt.value);
 
 const InstallationForm = ({ saleId }) => {
+    const router = useRouter();
+    const { data: zones = [] } = useZones();
+    const { data: combos = [] } = useDeviceCombos();
+    const { data: sims = [] } = useSims();
+    const { data: accessories = [] } = useAccessories();
+    const { data: devices = [] } = useDevices();
+    const { data: employees = [] } = useEmployees();
+    // Map options for selects
+    const zoneOptions = useMemo(() => mapOptions(zones, ["id", "zoneId"], ["zoneName", "name"]), [zones]);
+    const comboOptions = useMemo(() => mapOptions(combos, ["id", "deviceComboId"], ["comboName", "name"]), [combos]);
+    const simOptions = useMemo(() => mapOptions(sims, ["id", "simId"], ["simName", "name"]), [sims]);
+    const accessoryOptions = useMemo(() => mapOptions(accessories, ["id", "accessoryId"], ["accessoryName", "name"]), [accessories]);
+    const deviceOptions = useMemo(() => mapOptions(devices, ["id", "deviceId"], ["deviceName", "name"]), [devices]);
+    const technicianOptions = useMemo(() => mapOptions(employees, ["userId", "id"], ["emailId", "name", "cnic"]), [employees]);
     const [activeTab, setActiveTab] = useState(TABS.CLIENT);
     const [confidentialForm, setConfidentialForm] = useState(false)
     const { update, loading, error } = useUpdateTechnicianStage();
@@ -197,6 +199,7 @@ const InstallationForm = ({ saleId }) => {
                 markComplete: true,
             });
             setSuccessMessage("Installation submitted successfully.");
+            router.push('/dashboard/clients');
         }
     };
 
@@ -304,25 +307,15 @@ const InstallationForm = ({ saleId }) => {
             {/* ================= Product & Package ================= */}
             {activeTab === TABS.PRODUCT && !confidentialForm && (
                 <>
-                    
-                   
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
                                 <Input value={normalizedSale.productName || ""} placeholder="Select" className="text-sm py-2" disabled />
                             </FieldWrapper>
-                            <FieldWrapper label="Select Zone" required className="text-sm">
-                                <Select name="zoneId" value={form.zoneId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={zoneOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Device Combo" required className="text-sm">
-                                <Select name="deviceComboId" value={form.deviceComboId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={comboOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select SIM" required className="text-sm">
-                                <Select name="simId" value={form.simId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={simOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 2" required className="text-sm">
-                                <Select name="accessory2Id" value={form.accessory2Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
+
+                            <FieldWrapper label="Installation Date" required className="text-sm">
+                                <DateInput name="installationDate" value={form.installationDate} onChange={handleChange} placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
 
@@ -331,17 +324,9 @@ const InstallationForm = ({ saleId }) => {
                             <FieldWrapper label="Select Package Type" required className="text-sm">
                                 <Input value={normalizedSale.packageName || ""} placeholder="Select" className="text-sm py-2" disabled />
                             </FieldWrapper>
-                            <FieldWrapper label="Assign Technician" required className="text-sm">
-                                <Select name="assignedTechnicianUserId" value={form.assignedTechnicianUserId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={technicianOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Device" required className="text-sm">
-                                <Select name="deviceId" value={form.deviceId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={deviceOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 1" required className="text-sm">
-                                <Select name="accessory1Id" value={form.accessory1Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
-                            </FieldWrapper>
-                            <FieldWrapper label="Select Accessories 3" required className="text-sm">
-                                <Select name="accessory3Id" value={form.accessory3Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
+
+                            <FieldWrapper label="Renewal Date" required className="text-sm">
+                                <DateInput name="renewalDate" value={form.renewalDate} onChange={handleChange} placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
                             </FieldWrapper>
                         </div>
                     </div>
@@ -354,44 +339,50 @@ const InstallationForm = ({ saleId }) => {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                             {/* col 1 */}
-                            <div className="flex flex-col gap-3 md:gap-3">
-                                <FieldWrapper label="Select Product" required className="text-sm">
-                                    <Input value={normalizedSale.productName || ""} placeholder="Select" className="text-sm py-2" disabled />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select Zone" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select Device Combo" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select SIM" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select Accessories 2" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                            </div>
+                             <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Product" required className="text-sm">
+                                <Input value={normalizedSale.productName || ""} placeholder="Select" className="text-sm py-2" disabled />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Zone" required className="text-sm">
+                                <Select name="zoneId" value={form.zoneId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={zoneOptions}  disabled={true}/>
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Device Combo" required className="text-sm">
+                                <Select name="deviceComboId" value={form.deviceComboId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={comboOptions} disabled={true} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select SIM" required className="text-sm">
+                                <Select name="simId" value={form.simId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={simOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 2" required className="text-sm">
+                                <Select name="accessory2Id" value={form.accessory2Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} disabled={true} />
+                            </FieldWrapper>
+                        </div>
 
-                            {/* Column 2 */}
-                            <div className="flex flex-col gap-3 md:gap-3">
-                                <FieldWrapper label="Select Package Type" required className="text-sm">
-                                    <Input value={normalizedSale.packageName || ""} placeholder="Select" className="text-sm py-2" disabled />
-                                </FieldWrapper>
-
-                                <FieldWrapper label="Assign Technician" required className="text-sm">
-                                    <Input placeholder="Type here" className="text-sm py-2" />
-                                </FieldWrapper>
-
-                                <FieldWrapper label="Select Device" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select Accessories 1" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                                <FieldWrapper label="Select Accessories 3" required className="text-sm">
-                                    <Select placeholder="Select" className="text-sm py-2" />
-                                </FieldWrapper>
-                            </div>
+                        {/* Column 2 */}
+                        <div className="flex flex-col gap-3 md:gap-3">
+                            <FieldWrapper label="Select Package Type" required className="text-sm">
+                                <Input value={normalizedSale.packageName || ""} placeholder="Select" className="text-sm py-2" disabled />
+                            </FieldWrapper>
+                            <FieldWrapper label="Assign Technician" required className="text-sm">
+                                <Select name="assignedTechnicianUserId" value={form.assignedTechnicianUserId || 4} onChange={handleChange} placeholder="Select" className="text-sm py-2" 
+                                // options={technicianOptions}
+                                options={[
+                                     { value: 4, label: 'Technician 1' },
+                                        { value: 4, label: 'Technician 2' },
+                                        { value: 4, label: 'Technician 3' },
+                                        { value: 4, label: 'Technician 4' },
+                                ]}
+                                 />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Device" required className="text-sm">
+                                <Select name="deviceId" value={form.deviceId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={deviceOptions} disabled={true} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 1" required className="text-sm">
+                                <Select name="accessory1Id" value={form.accessory1Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} disabled={true} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 3" required className="text-sm">
+                                <Select name="accessory3Id" value={form.accessory3Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} disabled={true} />
+                            </FieldWrapper>
+                        </div>
                         </div>
                     </div>
                 </>
