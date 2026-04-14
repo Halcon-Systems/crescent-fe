@@ -7,7 +7,8 @@ const Select = ({
   onChange, 
   options = [],
   className = "",
-  disabled = false 
+  disabled = false,
+  name = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -28,7 +29,7 @@ const Select = ({
   }, []);
 
   const handleSelect = (optionValue) => {
-    // Always pass the name prop from Select, not from DOM
+
     onChange({ target: { name, value: optionValue } });
     setIsOpen(false);
   };
