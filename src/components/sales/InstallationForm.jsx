@@ -50,11 +50,26 @@ const InstallationForm = ({ saleId }) => {
         [clientCategories]
     );
 
+    // Helper to map clientCategoryId to name (copied from OperationProcessForm)
+    const getMappedLabel = (items, id, idKeys, labelKeys) => {
+        if (id === undefined || id === null || id === "") return "";
+        const item = (items || []).find((entry) =>
+            idKeys.some((key) => String(entry?.[key]) === String(id))
+        );
+        if (!item) return String(id);
+        const label = labelKeys.map((key) => item?.[key]).find((val) => typeof val === "string" && val.trim() !== "");
+        return label || String(id);
+    };
+
     const normalizedSale = useMemo(() => {
         const client = sale?.clientDetails || {};
         const product = sale?.productDetails || {};
+        const clientCategoryName =
+            client?.clientCategory?.categoryName ||
+            sale?.clientCategory?.categoryName ||
+            getMappedLabel(clientCategories, client?.clientCategoryId, ["id", "clientCategoryId", "categoryId", "_id"], ["categoryName", "name", "label"]);
         return {
-            clientCategory: client?.clientCategory?.categoryName || sale?.clientCategory?.categoryName || "",
+            clientCategory: clientCategoryName || "",
             irNo: client?.irNo || sale?.irNo || "",
             fullName: client?.fullName || sale?.fullName || "",
             cnicNo: client?.cnicNo || sale?.cnicNo || "",
@@ -71,7 +86,7 @@ const InstallationForm = ({ saleId }) => {
             productName: product?.product?.productName || sale?.product?.productName || "",
             packageName: product?.package?.packageName || sale?.package?.packageName || "",
         };
-    }, [sale]);
+    }, [sale, clientCategories]);
 
     useEffect(() => {
         const stage = sale?.installation || sale?.technicianStage || sale?.technician || {};
@@ -86,8 +101,10 @@ const InstallationForm = ({ saleId }) => {
             makeModel: stage.makeModel || prev.makeModel,
             vehicleYear: stage.vehicleYear ? String(stage.vehicleYear) : prev.vehicleYear,
             color: stage.color || prev.color,
+            // Ensure product and package names are set for display in product tab
+            productName: sale?.productDetails?.product?.productName || sale?.product?.productName || prev.productName || "",
+            packageName: sale?.productDetails?.package?.packageName || sale?.package?.packageName || prev.packageName || "",
         }));
-        
         // Set selected category from sale data
         if (sale?.clientDetails?.clientCategoryId || sale?.clientCategoryId) {
             setSelectedCategoryId(String(sale?.clientDetails?.clientCategoryId || sale?.clientCategoryId || ''));
@@ -187,14 +204,8 @@ const InstallationForm = ({ saleId }) => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
-                            <FieldWrapper label="Select Client Category" required className="text-sm">
-                                <Select 
-                                    value={selectedCategoryId} 
-                                    onChange={(e) => setSelectedCategoryId(e.target.value)} 
-                                    placeholder="Choose client category" 
-                                    className="text-sm py-2" 
-                                    options={clientCategoryOptions}
-                                />
+                            <FieldWrapper label="Client Category" required className="text-sm">
+                                <Input value={normalizedSale.clientCategory || ""} placeholder="Client Category" className="text-sm py-2" disabled />
                             </FieldWrapper>
 
                             <FieldWrapper label="Select IR No." className="text-sm">
