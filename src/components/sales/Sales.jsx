@@ -99,13 +99,17 @@ const Sales = () => {
           />
         )}
         {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={effectiveSaleId} 
-            onSuccess={() => {
+            onSuccess={(sale) => {
+              const createdId = sale?.saleId ?? sale?.id ?? sale?._id;
+              setNewSaleId(createdId);
                   setActiveForm("operationsProcess");
             }}
           />}
         {activeForm === "operationsProcess" && <OperationProcessForm saleId={effectiveSaleId} 
-            onSuccess={() => {
-                    setActiveForm("installation");
+            onSuccess={(sale) => {
+                const createdId = sale?.saleId ?? sale?.id ?? sale?._id;
+                setNewSaleId(createdId);
+                setActiveForm("installation");
                 }}
             />}
         {activeForm === "installation" && <InstallationForm saleId={effectiveSaleId} />}

@@ -34,7 +34,7 @@ const mapOptions = (items, idKeys, labelKeys) =>
         return { value: String(value ?? ''), label: label || `ID: ${value}` };
     }).filter((opt) => opt.value);
 
-const OperationProcessForm = ({ saleId }) => {
+const OperationProcessForm = ({ saleId, onSuccess}) => {
     const [form, setForm] = useState(initialForm);
     const [successMessage, setSuccessMessage] = useState('');
     const [validationMessage, setValidationMessage] = useState('');
@@ -147,6 +147,7 @@ const OperationProcessForm = ({ saleId }) => {
         };
         await update(saleId, payload);
         setSuccessMessage(submitToTechnician ? 'Saved and sent to technician stage.' : 'Saved as hold.');
+        onSuccess(sale);
     };
 
     const productOptions = useMemo(() => mapOptions(products, ['id', 'productId'], ['productName', 'name']), [products]);
