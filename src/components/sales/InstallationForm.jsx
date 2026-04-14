@@ -1,4 +1,25 @@
+import { useZones } from "@/hooks/zone/useZones";
+import { useDeviceCombos } from "@/hooks/device-combo/useDeviceCombos";
+import { useSims } from "@/hooks/sims/useSims";
+import { useAccessories } from "@/hooks/accessories/useAccessories";
+import { useDevices } from "@/hooks/devices/useDevices";
+import { useEmployees } from "@/hooks/employee/useEmployees";
+    const { data: zones = [] } = useZones();
+    const { data: combos = [] } = useDeviceCombos();
+    const { data: sims = [] } = useSims();
+    const { data: accessories = [] } = useAccessories();
+    const { data: devices = [] } = useDevices();
+    const { data: employees = [] } = useEmployees();
+    // Map options for selects
+    const zoneOptions = useMemo(() => mapOptions(zones, ["id", "zoneId"], ["zoneName", "name"]), [zones]);
+    const comboOptions = useMemo(() => mapOptions(combos, ["id", "deviceComboId"], ["comboName", "name"]), [combos]);
+    const simOptions = useMemo(() => mapOptions(sims, ["id", "simId"], ["simName", "name"]), [sims]);
+    const accessoryOptions = useMemo(() => mapOptions(accessories, ["id", "accessoryId"], ["accessoryName", "name"]), [accessories]);
 "use client";
+    const deviceOptions = useMemo(() => mapOptions(devices, ["id", "deviceId"], ["deviceName", "name"]), [devices]);
+    const technicianOptions = useMemo(() => mapOptions(employees, ["userId", "id"], ["emailId", "name", "cnic"]), [employees]);
+import { useProducts } from "@/hooks/product/useProducts";
+import { usePackages } from "@/hooks/package/usePackages";
 import React, { useEffect, useMemo, useState } from "react";
 import FieldWrapper from "../ui/FieldWrapper";
 import Select from "../ui/Select";
@@ -29,6 +50,8 @@ const InstallationForm = ({ saleId }) => {
     const { update, loading, error } = useUpdateTechnicianStage();
     const { data: sale } = useSaleById(saleId);
     const { data: clientCategories = [] } = useClientCategories();
+    const { data: products = [] } = useProducts();
+    const { data: packages = [] } = usePackages();
     const [successMessage, setSuccessMessage] = useState("");
     const [validationMessage, setValidationMessage] = useState("");
     const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -68,6 +91,11 @@ const InstallationForm = ({ saleId }) => {
             client?.clientCategory?.categoryName ||
             sale?.clientCategory?.categoryName ||
             getMappedLabel(clientCategories, client?.clientCategoryId, ["id", "clientCategoryId", "categoryId", "_id"], ["categoryName", "name", "label"]);
+
+        // Map productId/packageId to names
+        const productName = products.find(p => String(p.productId) === String(product?.productId))?.productName || "";
+        const packageName = packages.find(p => String(p.packageId) === String(product?.packageId))?.packageName || "";
+
         return {
             clientCategory: clientCategoryName || "",
             irNo: client?.irNo || sale?.irNo || "",
@@ -83,13 +111,13 @@ const InstallationForm = ({ saleId }) => {
             phoneOffice: client?.phoneOffice || sale?.phoneOffice || "",
             companyDepartment: client?.companyDepartment || sale?.companyDepartment || "",
             addressLine2: client?.addressLine2 || sale?.addressLine2 || "",
-            productName: product?.product?.productName || sale?.product?.productName || "",
-            packageName: product?.package?.packageName || sale?.package?.packageName || "",
+            productName,
+            packageName,
         };
-    }, [sale, clientCategories]);
+    }, [sale, clientCategories, products, packages]);
 
     useEffect(() => {
-        const stage = sale?.installation || sale?.technicianStage || sale?.technician || {};
+        const stage = sale?.operationsAssignment || sale?.installation || sale?.technicianStage || sale?.technician || {};
         setForm((prev) => ({
             ...prev,
             installationDate: stage.installationDate || prev.installationDate,
@@ -101,9 +129,15 @@ const InstallationForm = ({ saleId }) => {
             makeModel: stage.makeModel || prev.makeModel,
             vehicleYear: stage.vehicleYear ? String(stage.vehicleYear) : prev.vehicleYear,
             color: stage.color || prev.color,
-            // Ensure product and package names are set for display in product tab
-            productName: sale?.productDetails?.product?.productName || sale?.product?.productName || prev.productName || "",
-            packageName: sale?.productDetails?.package?.packageName || sale?.package?.packageName || prev.packageName || "",
+            zoneId: stage.zoneId ? String(stage.zoneId) : prev.zoneId || "",
+            deviceComboId: stage.deviceComboId ? String(stage.deviceComboId) : prev.deviceComboId || "",
+            simId: stage.simId ? String(stage.simId) : prev.simId || "",
+            accessory1Id: stage.accessory1Id ? String(stage.accessory1Id) : prev.accessory1Id || "",
+            accessory2Id: stage.accessory2Id ? String(stage.accessory2Id) : prev.accessory2Id || "",
+            accessory3Id: stage.accessory3Id ? String(stage.accessory3Id) : prev.accessory3Id || "",
+            packageId: stage.packageId ? String(stage.packageId) : prev.packageId || "",
+            assignedTechnicianUserId: stage.assignedTechnicianUserId ? String(stage.assignedTechnicianUserId) : prev.assignedTechnicianUserId || "",
+            deviceId: stage.deviceId ? String(stage.deviceId) : prev.deviceId || "",
         }));
         // Set selected category from sale data
         if (sale?.clientDetails?.clientCategoryId || sale?.clientCategoryId) {
@@ -270,15 +304,25 @@ const InstallationForm = ({ saleId }) => {
             {/* ================= Product & Package ================= */}
             {activeTab === TABS.PRODUCT && !confidentialForm && (
                 <>
+                    
+                   
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
                         {/* Column 1 */}
                         <div className="flex flex-col gap-3 md:gap-3">
                             <FieldWrapper label="Select Product" required className="text-sm">
                                 <Input value={normalizedSale.productName || ""} placeholder="Select" className="text-sm py-2" disabled />
                             </FieldWrapper>
-
-                            <FieldWrapper label="Installation Date" required className="text-sm">
-                                <DateInput name="installationDate" value={form.installationDate} onChange={handleChange} placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
+                            <FieldWrapper label="Select Zone" required className="text-sm">
+                                <Select name="zoneId" value={form.zoneId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={zoneOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Device Combo" required className="text-sm">
+                                <Select name="deviceComboId" value={form.deviceComboId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={comboOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select SIM" required className="text-sm">
+                                <Select name="simId" value={form.simId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={simOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 2" required className="text-sm">
+                                <Select name="accessory2Id" value={form.accessory2Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
                             </FieldWrapper>
                         </div>
 
@@ -287,9 +331,17 @@ const InstallationForm = ({ saleId }) => {
                             <FieldWrapper label="Select Package Type" required className="text-sm">
                                 <Input value={normalizedSale.packageName || ""} placeholder="Select" className="text-sm py-2" disabled />
                             </FieldWrapper>
-
-                            <FieldWrapper label="Renewal Date" required className="text-sm">
-                                <DateInput name="renewalDate" value={form.renewalDate} onChange={handleChange} placeholder="Select (dd/mm/yyyy)" className="text-sm py-2" />
+                            <FieldWrapper label="Assign Technician" required className="text-sm">
+                                <Select name="assignedTechnicianUserId" value={form.assignedTechnicianUserId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={technicianOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Device" required className="text-sm">
+                                <Select name="deviceId" value={form.deviceId || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={deviceOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 1" required className="text-sm">
+                                <Select name="accessory1Id" value={form.accessory1Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
+                            </FieldWrapper>
+                            <FieldWrapper label="Select Accessories 3" required className="text-sm">
+                                <Select name="accessory3Id" value={form.accessory3Id || ""} onChange={handleChange} placeholder="Select" className="text-sm py-2" options={accessoryOptions} />
                             </FieldWrapper>
                         </div>
                     </div>
