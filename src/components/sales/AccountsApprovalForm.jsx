@@ -10,7 +10,7 @@ import { useProducts } from '../../hooks/product/useProducts';
 import { usePackages } from '../../hooks/package/usePackages';
 import { useUpdateAccountsStage } from '../../hooks/sales/useUpdateAccountsStage';
 
-const AccountsApprovalForm = ({ saleId }) => {
+const AccountsApprovalForm = ({ saleId , onSuccess}) => {
     const router = useRouter();
     const { data: sale, loading: saleLoading } = useSaleById(saleId);
     const { data: clientCategories = [] } = useClientCategories();
@@ -90,7 +90,8 @@ const AccountsApprovalForm = ({ saleId }) => {
             decision: 'APPROVED',
         });
         // Navigate to Operation Process page after successful approval
-        router.push('/main/operation-process');
+        // router.push('/main/operation-process');
+        onSuccess();
     };
 
     if (saleLoading) return <div>Loading...</div>;

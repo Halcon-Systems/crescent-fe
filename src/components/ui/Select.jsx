@@ -42,9 +42,13 @@ const Select = ({
       {/* Dropdown trigger button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full min-h-10 flex items-center justify-between py-2  rounded-lg transition-colors `}
+        className={`w-full min-h-10 flex items-center justify-between py-2  rounded-lg transition-colors ${
+          disabled 
+            ? "text-gray-500 cursor-not-allowed" 
+            : "text-gray-700 hover:border-gray-400 cursor-pointer"
+        }`}
       >
         <span className={value ? "text-gray-900" : "text-gray-400"}>
           {selectedLabel}
@@ -64,7 +68,7 @@ const Select = ({
               <button
                 key={option.value}
                 type="button"
-                disabled={value===option.value && disabled}
+z                disabled={value===option.value && disabled}
                 onClick={() => handleSelect(option.value)}
                 className={`w-full text-left px-3 py-2  hover:bg-[#E2E6F9] hover:text-black transition-colors ${
                   value === option.value 

@@ -18,13 +18,14 @@ import {
   X,
   UtilityPole,
   LogOut,
+  PanelRight
 } from "lucide-react";
 import LogoSVG from "@/components/svg/logoSVG";
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useLogout } from "@/hooks/auth/useLogout";
 
-const Sidebar = () => {
+const Sidebar = ({collapseSide, setCollapseSide}) => {
   const pathname = usePathname();
   const router = useRouter();
   const [dashboardOpen, setDashboardOpen] = useState(true);
@@ -132,126 +133,138 @@ const Sidebar = () => {
       <aside className={`
         fixed top-0 left-0 h-screen bg-white border-r border-gray-200 z-40
         ${isMobile ? (sidebarOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'} 
-        transition-transform duration-300 ease-in-out w-64
+        transition-all duration-300 ease-in-out
+        ${collapseSide ? 'w-20' : 'w-64'}
       `}>
-        <div className="flex flex-col h-full px-4 py-6 overflow-y-auto">
-          {/* Logo aur close button mobile ke liye */}
-          <div className="flex items-center justify-between mb-0 px-2 pb-6 border-b border-gray-200">
-            <LogoSVG />
-            {isMobile && (
-              <button 
-                onClick={() => setSidebarOpen(false)}
-                className="p-2 text-gray-500 hover:text-gray-700 md:hidden"
-                aria-label="Close sidebar"
-              >
-              </button>
-            )}
-          </div>
+        <button 
+          onClick={()=> setCollapseSide(!collapseSide)}
+          className={` cursor-pointer p-2 hover:bg-gray-100 rounded-lg transition-colors w-[90%] flex justify-center m-auto`}
+          title={collapseSide ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <PanelRight className={`${collapseSide ? 'rotate-180' : ''}`} />
+        </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-3 px-2 py-4 mb-6 border-b border-gray-200">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100 flex items-center justify-center">
-              <User className="w-5 h-5 text-gray-600" />
-            </div>
-            <div>
-              <div className="font-medium text-gray-800 text-sm">User Name</div>
-              <div className="text-xs text-gray-500">Admin</div>
-            </div>
-          </div>
-
-          {/* Navigation Menu */}
-          <nav className="space-y-1">
-            {/* Dashboard Section */}
-            <div className="mb-2">
-              <button
-                onClick={() => setDashboardOpen(!dashboardOpen)}
-                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <LayoutDashboard className="w-5 h-5 text-gray-700" />
-                  <span className="font-medium text-gray-700">Dashboards</span>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${dashboardOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-              
-              {dashboardOpen && (
-                <div className="mt-1 ml-8 space-y-1">
-                  <MenuItem icon={Users} label="Clients" href="/dashboard/clients" />
-                  <MenuItem icon={Truck} label="Vehicles" href="/dashboard/vehicles" />
-                </div>
+        {/* Hide everything when collapsed */}
+        {!collapseSide && (
+          <div className="flex flex-col h-full px-4 py-4 overflow-y-auto">
+            {/* Logo aur close button mobile ke liye */}
+            <div className="flex items-center justify-between mb-0 px-2 pb-6 border-b border-gray-200">
+              <LogoSVG />
+              {isMobile && (
+                <button 
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 text-gray-500 hover:text-gray-700 md:hidden"
+                  aria-label="Close sidebar"
+                >
+                </button>
               )}
             </div>
 
-            {/* Pages Section */}
-            <div className="mt-6">
-              <button
-                onClick={() => setPagesOpen(!pagesOpen)}
-                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-gray-700" />
-                  <span className="font-medium text-gray-700">Pages</span>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${pagesOpen ? "rotate-180" : ""}`}
-                />
-              </button>
-              {pagesOpen && (
-                <div className="mt-1 ml-8 space-y-1">
-                  <MenuItem icon={MapPin} label="Geofence" href="/dashboard/geofence" />
-                  <MenuItem icon={Boxes} label="Inventory" href="/dashboard/inventory" />
-                  <MenuItem icon={Wallet} label="Finance & Accounts" href="/dashboard/finance" />
-                  <MenuItem icon={UtilityPole} label="RoboCall" href="/dashboard/robocall" />
-                  <MenuItem icon={Bell} label="Complaints" href="/dashboard/complaints" />
-                </div>
-              )}
+            {/* User Profile */}
+            <div className="flex items-center gap-3 px-2 py-4 mb-6 border-b border-gray-200">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-100 flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+              <div>
+                {/* <div className="font-medium text-gray-800 text-sm">User Name</div> */}
+                <div className="text-lg text-gray-500">Admin</div>
+              </div>
             </div>
 
+            {/* Navigation Menu */}
+            <nav className="space-y-1">
+              {/* Dashboard Section */}
+              <div className="mb-2">
+                <button
+                  onClick={() => setDashboardOpen(!dashboardOpen)}
+                  className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <LayoutDashboard className="w-5 h-5 text-gray-700" />
+                    <span className="font-medium text-gray-700">Dashboards</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${dashboardOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                
+                {dashboardOpen && (
+                  <div className="mt-1 ml-8 space-y-1">
+                    <MenuItem icon={Users} label="Clients" href="/dashboard/clients" />
+                    <MenuItem icon={Truck} label="Vehicles" href="/dashboard/vehicles" />
+                  </div>
+                )}
+              </div>
 
-            {/* Setup Section */}
-            <div className="mt-6">
+              {/* Pages Section */}
+              <div className="mt-6">
+                <button
+                  onClick={() => setPagesOpen(!pagesOpen)}
+                  className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-5 h-5 text-gray-700" />
+                    <span className="font-medium text-gray-700">Pages</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${pagesOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {pagesOpen && (
+                  <div className="mt-1 ml-8 space-y-1">
+                    <MenuItem icon={MapPin} label="Geofence" href="/dashboard/geofence" />
+                    <MenuItem icon={Boxes} label="Inventory" href="/dashboard/inventory" />
+                    <MenuItem icon={Wallet} label="Finance & Accounts" href="/dashboard/finance" />
+                    <MenuItem icon={UtilityPole} label="RoboCall" href="/dashboard/robocall" />
+                    <MenuItem icon={Bell} label="Complaints" href="/dashboard/complaints" />
+                  </div>
+                )}
+              </div>
+
+
+              {/* Setup Section */}
+              <div className="mt-6">
+                <button
+                  onClick={() => setSetupOpen(!setupOpen)}
+                  className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Building2 className="w-5 h-5 text-gray-700" />
+                    <span className="font-medium text-gray-700">Setup</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${setupOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {setupOpen && (
+                  <div className="mt-1 ml-8 space-y-1">
+                    <MenuItem icon={Bell} label="Notifications" href="/dashboard/notifications" />
+                    <MenuItem icon={Building2} label="Organization Setup" href="/setup/organization-setup" />
+                    <MenuItem icon={FileText} label="Reports" href="/dashboard/reports" />
+                  </div>
+                )}
+              </div>
+
+            </nav>
+
+            <div className="mt-auto pt-6 border-t border-gray-200">
               <button
-                onClick={() => setSetupOpen(!setupOpen)}
-                className="flex items-center justify-between w-full px-3 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 w-full
+                  ${isLoggingOut
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  }
+                `}
               >
-                <div className="flex items-center gap-3">
-                  <Building2 className="w-5 h-5 text-gray-700" />
-                  <span className="font-medium text-gray-700">Setup</span>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform ${setupOpen ? "rotate-180" : ""}`}
-                />
+                <LogOut className="w-5 h-5" />
+                <span className="flex-1 font-medium">Logout</span>
               </button>
-              {setupOpen && (
-                <div className="mt-1 ml-8 space-y-1">
-                  <MenuItem icon={Bell} label="Notifications" href="/dashboard/notifications" />
-                  <MenuItem icon={Building2} label="Organization Setup" href="/setup/organization-setup" />
-                  <MenuItem icon={FileText} label="Reports" href="/dashboard/reports" />
-                </div>
-              )}
             </div>
-
-          </nav>
-
-          <div className="mt-auto pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 w-full
-                ${isLoggingOut
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                }
-              `}
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="flex-1 font-medium">Logout</span>
-            </button>
           </div>
-        </div>
+        )}
       </aside>
 
       {sidebarOpen && isMobile && (

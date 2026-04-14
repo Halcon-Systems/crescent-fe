@@ -98,7 +98,11 @@ const Sales = () => {
             }}
           />
         )}
-        {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={effectiveSaleId} />}
+        {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={effectiveSaleId} 
+            onSuccess={() => {
+                  setActiveForm("operationsProcess");
+            }}
+          />}
         {activeForm === "operationsProcess" && <OperationProcessForm saleId={effectiveSaleId} />}
         {activeForm === "installation" && <InstallationForm saleId={effectiveSaleId} />}
       </div>
