@@ -10,17 +10,17 @@ export async function updateTechnicianStage(id, payload) {
 		throw error.response?.data || error;
 	}
 }
-export async function updateSalesStage(id, payload) {
-	try {
-		const response = await axios.patch(`${SALES_API_URL}/${id}/sales-stage`, payload, {
-			headers: {
-				'Content-Type': 'application/json',
-			},
-		});
-		return response.data;
-	} catch (error) {
-		throw error.response?.data || error;
-	}
+export async function createSale(payload) {
+       try {
+	       const response = await axios.post(`${SALES_API_URL}`, payload, {
+		       headers: {
+			       'Content-Type': 'application/json',
+		       },
+	       });
+	       return response.data;
+       } catch (error) {
+	       throw error.response?.data || error;
+       }
 }
 export async function updateOperationsStage(id, payload) {
 	try {

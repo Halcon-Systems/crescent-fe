@@ -7,9 +7,7 @@ import Textarea from '../ui/TextArea';
 import DateInput from '../ui/DateInput';
 import { useSaleById } from '../../hooks/sales/useSaleById';
 
-const AccountsApprovalForm = () => {
-    // Use saleId = 1 for now
-    const saleId = 1;
+const AccountsApprovalForm = ({ saleId }) => {
     const { data: sale, loading } = useSaleById(saleId);
 
     // Use sale as the single source of truth for autofill

@@ -6,7 +6,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Textarea from '../ui/TextArea';
 import DateInput from '../ui/DateInput';
-import { useUpdateSalesStage } from '../../hooks/sales/useUpdateSalesStage';
+import { useCreateSale } from '../../hooks/sales/useUpdateSalesStage';
 import { useClientCategories } from '../../hooks/client-category/useClientCategories';
 import { useProducts } from '../../hooks/product/useProducts';
 import { usePackages } from '../../hooks/package/usePackages';
@@ -34,15 +34,13 @@ const initialForm = {
     salesRemarks: '',
 };
 
-const AddNewSaleForm = () => {
+const AddNewSaleForm = ({ onSuccess }) => {
     const [form, setForm] = useState(initialForm);
-    const { update, loading, error, data } = useUpdateSalesStage();
+    const { create, loading, error, data } = useCreateSale();
     const { data: clientCategories, isLoading: loadingCategories } = useClientCategories();
     const { data: products, isLoading: loadingProducts } = useProducts();
     const { data: packages, isLoading: loadingPackages } = usePackages();
 
-    // Dummy sale id for updateSalesStage, replace with actual id as needed
-    const saleId = '1';
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -52,7 +50,8 @@ const AddNewSaleForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await update(saleId, form);
+            const sale = await create(form);
+            if (onSuccess && sale) onSuccess(sale);
             // Optionally reset form or show success
         } catch (err) {
             // Error handled by hook

@@ -1,25 +1,25 @@
 import { useState } from 'react';
-import { updateSalesStage } from '../../services/sales.service';
+import { createSale } from '../../services/sales.service';
 
-export function useUpdateSalesStage() {
+export function useCreateSale() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
 
-  const update = async (id, payload) => {
+  const create = async (payload) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await updateSalesStage(id, payload);
+      const result = await createSale(payload);
       setData(result);
       setLoading(false);
       return result;
     } catch (err) {
-      setError(err?.message || 'Failed to update sales stage');
+      setError(err?.message || 'Failed to create sale');
       setLoading(false);
       throw err;
     }
   };
 
-  return { update, loading, error, data };
+  return { create, loading, error, data };
 }

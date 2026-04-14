@@ -8,6 +8,7 @@ import InstallationForm from "./InstallationForm";
 
 const Sales = () => {
   const [activeForm, setActiveForm] = useState("addSale");
+  const [newSaleId, setNewSaleId] = useState(null);
 
   // Button config array
   const buttons = [
@@ -47,8 +48,15 @@ const Sales = () => {
 
       {/* Right form area */}
       <div className="flex-1 min-w-0">
-        {activeForm === "addSale" && <AddNewSaleForm />}
-        {activeForm === "accountsApproval" && <AccountsApprovalForm />}
+        {activeForm === "addSale" && (
+          <AddNewSaleForm
+            onSuccess={(sale) => {
+              setNewSaleId(sale.id || sale._id);
+              setActiveForm("accountsApproval");
+            }}
+          />
+        )}
+        {activeForm === "accountsApproval" && <AccountsApprovalForm saleId={newSaleId} />}
         {activeForm === "operationsProcess" && <OperationProcessForm />}
         {activeForm === "installation" && <InstallationForm />}
       </div>
