@@ -72,6 +72,9 @@ const Sidebar = ({collapseSide, setCollapseSide}) => {
 
   const MenuItem = ({ icon: Icon, label, href = "/dashboard/clients" }) => {
     const isActive = pathname === href || pathname.startsWith(href + "/");
+    if (href === "/setup/organization-setup") {
+      localStorage.setItem("organizationSetupActiveTab","addOffice")
+    }
     return (
       <Link
         href={href}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, use } from "react";
 import { useEmployees } from "@/hooks/employee/useEmployees";
 import { useCreateEmployee } from "@/hooks/employee/useCreateEmployee";
 import { useUpdateEmployee } from "@/hooks/employee/useUpdateEmployee";
@@ -15,6 +15,7 @@ import ViewModal from "../components/ViewModal";
 import ValidationErrorModal from "../components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 import Select from "@/components/ui/Select";
+import { useRolesTypes } from "@/hooks/roles/useRolesTypes";
 
 const EmployeeTabContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +42,8 @@ const EmployeeTabContent = () => {
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [userRoleId, setUserRoleId] = useState("");
+
+  const { data: UserRoles, isLoading: isLoadingRoles } = useRolesTypes();
 
   const { data, isLoading, error, isFetching, isPending, refetch } =
     useEmployees();
@@ -248,6 +251,18 @@ const EmployeeTabContent = () => {
     setViewItem(null);
   };
 
+  const userRoleOptions = useMemo(() => {
+    if (isLoadingRoles || !UserRoles) return [];
+    return UserRoles.map((role) => ({
+      value: role.roleId,
+      label: role.roleName,
+    }));
+  }, [UserRoles, isLoadingRoles]);
+
+  useEffect(() => {
+    console.log("User Role Options:", userRoleOptions);
+  }, [userRoleOptions]);
+
   return (
     <div className="flex-1 flex flex-col">
       {/* SECTION 1: Add Employee */}
@@ -379,10 +394,7 @@ const EmployeeTabContent = () => {
                 value={userRoleId}
                 onChange={(e) => setUserRoleId(e.target.value)}
                 placeholder="Select Role"
-                options={[
-                  { value: "1", label: "System Administrator" },
-                  { value: "2", label: "Admin" },
-                ]}
+                options={userRoleOptions}
                 className="text-sm"
               />
             </FieldWrapper>

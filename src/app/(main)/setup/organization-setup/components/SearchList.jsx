@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "@/components/ui/Input";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import SuccessModal from "@/components/ui/SuccessModal";
@@ -23,6 +23,7 @@ const SearchList = ({
   searchQuery = "",
   onSearchChange = () => {},
   tabName = "Item",
+  itemsPerPage = 6,
 }) => {
   const [toggleStates, setToggleStates] = useState(() =>
     Object.fromEntries(items.map((item, index) => [index, item?.isActive ?? true]))
@@ -30,6 +31,7 @@ const SearchList = ({
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [filterActive, setFilterActive] = useState(null);
   const [sortBy, setSortBy] = useState("default");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Modal states
   const [deleteConfirmation, setDeleteConfirmation] = useState({
@@ -91,7 +93,17 @@ const SearchList = ({
   };
 
   const filteredItems = getSortedAndFiltered();
- 
+  
+  // Reset to page 1 when filters/search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterActive, sortBy]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
 
   const handleToggle = (item, index) => {
     const nextValue = !getItemActive(item, index);
@@ -131,6 +143,36 @@ const SearchList = ({
     if (onView) onView(item, index);
   };
 
+  // Generate page numbers with smart pruning for many pages
+  const getPaginationPages = () => {
+    const delta = 1; // pages on each side of current page
+    const left = currentPage - delta;
+    const right = currentPage + delta + 1;
+    const range = [];
+    const rangeWithDots = [];
+    let l;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i == 1 || i == totalPages || (i >= left && i < right)) {
+        range.push(i);
+      }
+    }
+
+    range.forEach((i) => {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    });
+
+    return rangeWithDots;
+  };
+
   // console.log("Filtered & Sorted Items:", filteredItems);
 
   return (
@@ -140,7 +182,7 @@ const SearchList = ({
           <Search className="h-6 w-6 text-black" />
           <Input 
             placeholder="Search Item" 
-            className="py-2.5 font-lexend font-light caret-gray-200"
+            className="py-2.5 font-lexend font-light caret-gray-900"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -169,7 +211,7 @@ const SearchList = ({
             <h3 className="text-base font-semibold text-gray-800">Filter & Sort</h3>
             <button
               onClick={() => setShowFilterPanel(false)}
-              className="text-gray-500 hover:text-gray-700 text-lg"
+              className="cursor-pointer text-gray-500 hover:text-gray-700 text-lg"
             >
               ✕
             </button>
@@ -284,7 +326,7 @@ const SearchList = ({
               setFilterActive(null);
               setSortBy("default");
             }}
-            className="w-full mt-5 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition"
+            className="cursor-pointer w-full mt-5 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition"
           >
             Reset All
           </button>
@@ -313,35 +355,83 @@ const SearchList = ({
             No items available
           </div>
         ) : filteredItems.length > 0 ? (
-          filteredItems.map(({ item, index }, displayIndex) => {
-            const name = getItemName(item);
-            const isActive = getItemActive(item, index);
-            return (
-              <div
-                key={item?.Id ?? item?.id ?? index}
-                className="flex items-center justify-between bg-[#F6FBF8] px-4 py-3 transition hover:bg-[#EEF6F2]"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-600">
-                    {displayIndex + 1}
+          <>
+            {paginatedItems.map(({ item, index }, displayIndex) => {
+              const name = getItemName(item);
+              const isActive = getItemActive(item, index);
+              return (
+                <div
+                  key={item?.Id ?? item?.id ?? index}
+                  className="flex items-center justify-between bg-[#F6FBF8] px-4 py-3 transition hover:bg-[#EEF6F2]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-600">
+                      {startIndex + displayIndex + 1}
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">{name}</span>
                   </div>
-                  <span className="text-sm font-medium text-gray-800">{name}</span>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  {showView && <ViewButton onClick={() => handleViewClick(item, index)} />}
-                  {showEdit && <EditButton onClick={() => handleEditClick(item, index)} />}
-                  {showDelete && <DeleteButton onClick={() => handleDeleteClick(item, index)} />}
-                  {showToggle && (
-                    <ToggleButton
-                      isActive={!!isActive}
-                      onClick={() => handleToggle(item, index)}
-                    />
-                  )}
+                  <div className="flex items-center gap-3">
+                    {showView && <ViewButton onClick={() => handleViewClick(item, index)} />}
+                    {showEdit && <EditButton onClick={() => handleEditClick(item, index)} />}
+                    {showDelete && <DeleteButton onClick={() => handleDeleteClick(item, index)} />}
+                    {showToggle && (
+                      <ToggleButton
+                        isActive={!!isActive}
+                        onClick={() => handleToggle(item, index)}
+                      />
+                    )}
+                  </div>
                 </div>
+              );
+            })}
+
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-end gap-2 mt-6 px-4">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="cursor-pointer p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {getPaginationPages().map((page, index) => (
+                  <React.Fragment key={index}>
+                    {page === "..." ? (
+                      <span className="px-2 py-2 text-gray-600 text-sm font-medium">...</span>
+                    ) : (
+                      <button
+                        onClick={() => setCurrentPage(page)}
+                        className={`cursor-pointer px-3 py-2 min-w-[35px] rounded-lg font-medium text-sm transition ${
+                          currentPage === page
+                            ? "bg-blue-500 text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </React.Fragment>
+                ))}
               </div>
-            );
-          })
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="cursor-pointer p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                title="Next page"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              <span className="ml-4 text-sm text-gray-600 font-medium">
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
+          </>
         ) : (
           <div className="text-center py-8 text-gray-500">
             No items found
