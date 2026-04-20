@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "node ./scripts/protect-postcss.js",
+    "postinstall": "node ./scripts/protect-postcss.js backup",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
