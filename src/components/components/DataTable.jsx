@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import Input from "@/components/ui/Input";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
@@ -8,10 +8,11 @@ import SuccessModal from "@/components/ui/SuccessModal";
 import { ViewButton, EditButton, DeleteButton, ToggleButton } from "./ButtonComponents";
 import Image from "next/image";
 
-const SearchList = ({
+const DataTable = ({
   isLoading = false,
   error = null,
-  items,
+  items = [],
+  columns = [],
   showView = true,
   showEdit = true,
   showDelete = true,
@@ -32,8 +33,10 @@ const SearchList = ({
   const [filterActive, setFilterActive] = useState(null);
   const [sortBy, setSortBy] = useState("default");
   const [currentPage, setCurrentPage] = useState(1);
-  
-  // Modal states
+  const [filterPanelStyle, setFilterPanelStyle] = useState({ top: 0, left: 0 });
+  const filterButtonRef = useRef(null);
+  const filterPanelRef = useRef(null);
+
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     itemName: "",
@@ -46,9 +49,23 @@ const SearchList = ({
     type: "create",
   });
 
+  const getColumnValue = (item, columnKey) => {
+    const keys = columnKey.split(".");
+    let value = item;
+    for (let key of keys) {
+      value = value?.[key];
+    }
+    return value ?? "";
+  };
+
   const getItemName = (item) => {
     if (typeof item === "string") return item;
-    return item?.name || item?.title || "";
+    return item?.name || item?.storeName || item?.businessName || item?.title || item?.itemName || item?.officeName || "";
+  };
+
+  const getItemId = (item) => {
+    if (typeof item === "string") return item;
+    return item?.id ?? item?.storeId ?? item?._id ?? item?.store_id ?? null;
   };
 
   const getItemActive = (item, index) => {
@@ -63,11 +80,11 @@ const SearchList = ({
         const name = getItemName(item);
         const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
         const isActive = getItemActive(item, index);
-        
+
         if (filterActive === null) return matchesSearch;
         if (filterActive === true) return matchesSearch && isActive;
         if (filterActive === false) return matchesSearch && !isActive;
-        
+
         return matchesSearch;
       });
 
@@ -93,13 +110,65 @@ const SearchList = ({
   };
 
   const filteredItems = getSortedAndFiltered();
-  
-  // Reset to page 1 when filters/search changes
+
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filterActive, sortBy]);
 
-  // Calculate pagination
+  React.useEffect(() => {
+    if (!showFilterPanel) return;
+
+    const updateFilterPanelPosition = () => {
+      const buttonEl = filterButtonRef.current;
+      const panelEl = filterPanelRef.current;
+      if (!buttonEl || !panelEl) return;
+
+      const buttonRect = buttonEl.getBoundingClientRect();
+      const panelRect = panelEl.getBoundingClientRect();
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const padding = 12;
+      const gap = 8;
+
+      let left = buttonRect.right - panelRect.width;
+      left = Math.max(padding, Math.min(left, viewportWidth - panelRect.width - padding));
+
+      const spaceBelow = viewportHeight - buttonRect.bottom - gap;
+      const spaceAbove = buttonRect.top - gap;
+      let top;
+
+      if (spaceBelow >= panelRect.height || spaceBelow >= spaceAbove) {
+        top = buttonRect.bottom + gap;
+      } else {
+        top = buttonRect.top - panelRect.height - gap;
+      }
+
+      top = Math.max(padding, Math.min(top, viewportHeight - panelRect.height - padding));
+      setFilterPanelStyle({ top, left });
+    };
+
+    updateFilterPanelPosition();
+    requestAnimationFrame(updateFilterPanelPosition);
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" && filterPanelRef.current
+        ? new ResizeObserver(updateFilterPanelPosition)
+        : null;
+    if (resizeObserver && filterPanelRef.current) {
+      resizeObserver.observe(filterPanelRef.current);
+    }
+
+    window.addEventListener("resize", updateFilterPanelPosition);
+    window.addEventListener("scroll", updateFilterPanelPosition, true);
+
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener("resize", updateFilterPanelPosition);
+      window.removeEventListener("scroll", updateFilterPanelPosition, true);
+    };
+  }, [showFilterPanel]);
+
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -121,12 +190,12 @@ const SearchList = ({
 
   const handleDeleteConfirm = () => {
     const { itemIndex, itemName } = deleteConfirmation;
+    const item = items[itemIndex];
+    const itemId = getItemId(item) ?? itemName;
     setDeleteConfirmation({ isOpen: false, itemName: "", itemIndex: null });
-    
-    // Call the delete callback
-    if (onDelete) onDelete(itemName, itemIndex);
-    
-    // Show success modal
+
+    if (onDelete) onDelete(itemId, itemIndex, item);
+
     setSuccessModal({
       isOpen: true,
       title: "Deleted Successfully",
@@ -143,9 +212,8 @@ const SearchList = ({
     if (onView) onView(item, index);
   };
 
-  // Generate page numbers with smart pruning for many pages
   const getPaginationPages = () => {
-    const delta = 1; // pages on each side of current page
+    const delta = 1;
     const left = currentPage - delta;
     const right = currentPage + delta + 1;
     const range = [];
@@ -173,8 +241,6 @@ const SearchList = ({
     return rangeWithDots;
   };
 
-  // console.log("Filtered & Sorted Items:", filteredItems);
-
   return (
     <div className="relative">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between h-12">
@@ -189,6 +255,7 @@ const SearchList = ({
         </div>
 
         <button
+          ref={filterButtonRef}
           type="button"
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-8 py-2.5 text-md font-lexend text-gray-700 transition hover:bg-gray-50 h-full relative"
@@ -203,10 +270,16 @@ const SearchList = ({
         </button>
       </div>
 
-      {/* Enhanced Filter Panel */}
       {showFilterPanel && (
-        <div className="absolute right-36 bottom-60 bg-white border border-gray-300 rounded-xl shadow-xl p-6 z-10 w-72 animate-in fade-in">
-          {/* Header */}
+        <div
+          ref={filterPanelRef}
+          className="fixed bg-white border border-gray-300 rounded-xl shadow-xl p-6 z-50 w-72 animate-in fade-in"
+          style={{
+            ...filterPanelStyle,
+            maxHeight: "calc(100vh - 24px)",
+            overflowY: "auto",
+          }}
+        >
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-200">
             <h3 className="text-base font-semibold text-gray-800">Filter & Sort</h3>
             <button
@@ -217,7 +290,6 @@ const SearchList = ({
             </button>
           </div>
 
-          {/* Filter Section */}
           <div className="mb-6">
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Status</h4>
             <div className="space-y-2">
@@ -260,10 +332,8 @@ const SearchList = ({
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-gray-200 my-4"></div>
 
-          {/* Sort Section */}
           <div>
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Sort By</h4>
             <div className="space-y-2">
@@ -320,7 +390,6 @@ const SearchList = ({
             </div>
           </div>
 
-          {/* Reset Button */}
           <button
             onClick={() => {
               setFilterActive(null);
@@ -332,7 +401,7 @@ const SearchList = ({
           </button>
         </div>
       )}
-      
+
       <div className="mt-15 sm:mt-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -356,37 +425,57 @@ const SearchList = ({
           </div>
         ) : filteredItems.length > 0 ? (
           <>
-            {paginatedItems.map(({ item, index }, displayIndex) => {
-              const name = getItemName(item);
-              const isActive = getItemActive(item, index);
-              return (
-                <div
-                  key={item?.Id ?? item?.id ?? index}
-                  className="flex items-center justify-between bg-[#F6FBF8] px-4 py-3 transition hover:bg-[#EEF6F2]"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-100 text-xs font-semibold text-purple-600">
-                      {startIndex + displayIndex + 1}
-                    </div>
-                    <span className="text-sm font-medium text-gray-800">{name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {showView && <ViewButton onClick={() => handleViewClick(item, index)} />}
-                    {showEdit && <EditButton onClick={() => handleEditClick(item, index)} />}
-                    {showDelete && <DeleteButton onClick={() => handleDeleteClick(item, index)} />}
-                    {showToggle && (
-                      <ToggleButton
-                        isActive={!!isActive}
-                        onClick={() => handleToggle(item, index)}
-                      />
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    {columns.map((column) => (
+                      <th
+                        key={column.key}
+                        className="py-3 px-4 font-semibold text-gray-700 text-sm text-left"
+                        style={{ width: column.width }}
+                      >
+                        {column.label}
+                      </th>
+                    ))}
+                    {(showView || showEdit || showDelete || showToggle) && (
+                      <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-center">
+                        Action
+                      </th>
                     )}
-                  </div>
-                </div>
-              );
-            })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedItems.map(({ item, index }, displayIndex) => (
+                    <tr key={item?.id ?? index} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                      {columns.map((column) => (
+                        <td key={column.key} className="py-4 px-4 text-sm text-gray-700">
+                          {column.render
+                            ? column.render(item, index)
+                            : getColumnValue(item, column.key)}
+                        </td>
+                      ))}
+                      {(showView || showEdit || showDelete || showToggle) && (
+                        <td className="py-4 px-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            {showView && <ViewButton onClick={() => handleViewClick(item, index)} />}
+                            {showEdit && <EditButton onClick={() => handleEditClick(item, index)} />}
+                            {showDelete && <DeleteButton onClick={() => handleDeleteClick(item, index)} />}
+                            {showToggle && (
+                              <ToggleButton
+                                isActive={!!getItemActive(item, index)}
+                                onClick={() => handleToggle(item, index)}
+                              />
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            {/* Pagination Controls */}
             <div className="flex items-center justify-end gap-2 mt-6 px-4">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -439,7 +528,6 @@ const SearchList = ({
         )}
       </div>
 
-      {/* Modals */}
       <DeleteConfirmationModal
         isOpen={deleteConfirmation.isOpen}
         itemName={deleteConfirmation.itemName}
@@ -458,4 +546,4 @@ const SearchList = ({
   );
 };
 
-export default SearchList;
+export default DataTable;

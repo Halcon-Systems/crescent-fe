@@ -7,11 +7,11 @@ import { useUpdateProduct } from "@/hooks/product/useUpdateProduct";
 import { useDeleteProduct } from "@/hooks/product/useDeleteProduct";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
-import FormActions from "../components/FormActions";
-import SearchList from "../components/SearchList";
-import EditModal from "../components/EditModal";
-import ViewModal from "../components/ViewModal";
-import ValidationErrorModal from "../components/ValidationErrorModal";
+import FormActions from "@/components/components/FormActions";
+import SearchList from "@/components/components/SearchList";
+import EditModal from "@/components/components/EditModal";
+import ViewModal from "@/components/components/ViewModal";
+import ValidationErrorModal from "@/components/components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
 const AddProductsTabContent = () => {

@@ -3,14 +3,14 @@
 import React, { useMemo, useState, useEffect } from "react";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
-import FormActions from "../components/FormActions";
-import SearchList from "../components/SearchList";
+import FormActions from "@/components/components/FormActions";
+import SearchList from "@/components/components/SearchList";
 import { useOffices } from "@/hooks/office/useOffices";
 import { useDeleteOffice } from "@/hooks/office/useDeleteOffice";
 import { useUpdateOffice } from "@/hooks/office/useUpdateOffice";
 import { useCreateOffice } from "@/hooks/office/useCreateOffice";
-import EditModal from "../components/EditModal";
-import ValidationErrorModal from "../components/ValidationErrorModal";
+import EditModal from "@/components/components/EditModal";
+import ValidationErrorModal from "@/components/components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
 const AddOfficeTabContent = () => {

@@ -1,45 +1,178 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit2, Trash2, Power, Loader } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 import FieldWrapper from '../../../ui/FieldWrapper';
 import Input from '../../../ui/Input';
-import Select from '../../../ui/Select';
-import Textarea from '../../../ui/TextArea';
+import EditModal from '@/components/components/EditModal';
+import { useVendors } from '@/hooks/inventory/setup/useVendors';
+import { useCreateVendor } from '@/hooks/inventory/setup/useCreateVendor';
+import { useUpdateVendor } from '@/hooks/inventory/setup/useUpdateVendor';
+import { useDeleteVendor } from '@/hooks/inventory/setup/useDeleteVendor';
 
 const AddVendorPage = ({ onStepChange, onMarkCompleted }) => {
-    const [vendors, setVendors] = useState([
-        { id: '1', businessName: 'Tech Supplies Inc.', city: 'New York', address: '123 Tech Street', contactPerson: 'John Smith', emailId: 'john001', primaryContactNumber: '+1234567890', secondaryContactNumber: '+1234567891', isActive: true },
-        { id: '2', businessName: 'Office Furniture Co.', city: 'Los Angeles', address: '456 Office Blvd', contactPerson: 'Jane Doe', emailId: 'jane002', primaryContactNumber: '+0987654321', secondaryContactNumber: '+0987654322', isActive: true },
-        { id: '3', businessName: 'Stationery World', city: 'Chicago', address: '789 Supply Ave', contactPerson: 'Bob Johnson', emailId: 'bob003', primaryContactNumber: '+1122334455', secondaryContactNumber: '+1122334456', isActive: false }
-    ]);
-    
+    const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
-        businessName: '',
-        city: '',
+        vendorName: '',
+        phone: '',
+        email: '',
         address: '',
         contactPerson: '',
-        emailId: '',
-        primaryContactNumber: '',
-        secondaryContactNumber: '',
         isActive: true
     });
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedVendor, setSelectedVendor] = useState(null);
+    const [editVendorName, setEditVendorName] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+    const [editEmail, setEditEmail] = useState('');
+    const [editAddress, setEditAddress] = useState('');
+    const [editContactPerson, setEditContactPerson] = useState('');
+    const [updateError, setUpdateError] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
 
-    const paymentTermsOptions = [
-        { id: 'net30', name: 'Net 30' },
-        { id: 'net60', name: 'Net 60' },
-        { id: 'net90', name: 'Net 90' },
-        { id: 'immediate', name: 'Immediate' }
-    ];
+    const normalizeList = (data) => {
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        if (Array.isArray(data?.items)) return data.items;
+        return [];
+    };
 
-    const filteredVendors = vendors.filter(vendor =>
-        vendor.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const setVendorsQueryData = (updater) => {
+        queryClient.setQueryData(['inventory-vendors'], (current) => {
+            const currentList = normalizeList(current);
+            const nextList = typeof updater === 'function' ? updater(currentList) : updater;
+
+            if (Array.isArray(current)) return nextList;
+            if (Array.isArray(current?.data)) return { ...current, data: nextList };
+            if (Array.isArray(current?.items)) return { ...current, items: nextList };
+
+            return nextList;
+        });
+    };
+
+    const getVendorId = (vendor) => {
+        if (!vendor) return null;
+        if (typeof vendor === 'string' || typeof vendor === 'number') return vendor;
+        return vendor.id ?? vendor.vendorId ?? vendor._id ?? null;
+    };
+
+    const vendorsQuery = useVendors();
+    const vendors = useMemo(() => normalizeList(vendorsQuery.data), [vendorsQuery.data]);
+    const normalizedVendors = useMemo(
+        () => vendors.map((vendor) => ({
+            ...vendor,
+            id: vendor.id ?? vendor.vendorId ?? vendor._id,
+            vendorName: vendor.vendorName || vendor.businessName || vendor.name || '',
+            businessName: vendor.businessName || vendor.vendorName || vendor.name || '',
+            phone: vendor.phone || vendor.primaryContactNumber || '',
+            email: vendor.email || vendor.emailId || '',
+        })),
+        [vendors]
+    );
+    const loading = vendorsQuery.isLoading;
+    const tableError = vendorsQuery.error?.message || null;
+
+    const { mutate: createVendor, isPending: isCreating } = useCreateVendor({
+        onMutate: async (newVendor) => {
+            await queryClient.cancelQueries({ queryKey: ['inventory-vendors'] });
+            const previousVendors = queryClient.getQueryData(['inventory-vendors']);
+            const tempVendor = {
+                id: `temp-${Date.now()}`,
+                ...newVendor,
+            };
+
+            setVendorsQueryData((currentList) => [tempVendor, ...currentList]);
+
+            return { previousVendors };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousVendors !== undefined) {
+                queryClient.setQueryData(['inventory-vendors'], context.previousVendors);
+            }
+            setSubmitError(error?.response?.data?.message || error?.message || 'Failed to create vendor.');
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['inventory-vendors'] });
+        },
+    });
+
+    const { mutate: updateVendor, isPending: isUpdating } = useUpdateVendor({
+        onMutate: async ({ id, data }) => {
+            await queryClient.cancelQueries({ queryKey: ['inventory-vendors'] });
+            const previousVendors = queryClient.getQueryData(['inventory-vendors']);
+
+            setVendorsQueryData((currentList) =>
+                currentList.map((vendor) => {
+                    if (String(getVendorId(vendor)) !== String(id)) return vendor;
+                    return {
+                        ...vendor,
+                        ...data,
+                        id: getVendorId(vendor) ?? id,
+                    };
+                })
+            );
+
+            return { previousVendors };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousVendors !== undefined) {
+                queryClient.setQueryData(['inventory-vendors'], context.previousVendors);
+            }
+            setUpdateError(error?.response?.data?.message || error?.message || 'Failed to update vendor.');
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['inventory-vendors'] });
+        },
+    });
+
+    const { mutate: deleteVendor } = useDeleteVendor({
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ['inventory-vendors'] });
+            const previousVendors = queryClient.getQueryData(['inventory-vendors']);
+
+            setVendorsQueryData((currentList) =>
+                currentList.filter((vendor) => String(getVendorId(vendor)) !== String(id))
+            );
+
+            return { previousVendors };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousVendors !== undefined) {
+                queryClient.setQueryData(['inventory-vendors'], context.previousVendors);
+            }
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['inventory-vendors'] });
+        },
+    });
+
+    const filteredVendors = normalizedVendors.filter(vendor =>
+        vendor.vendorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         vendor.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const tableColumns = [
+        { key: 'vendorName', label: 'Vendor Name', width: '20%' },
+        { key: 'contactPerson', label: 'Contact Person', width: '20%' },
+        { key: 'phone', label: 'Phone', width: '15%' },
+        { key: 'email', label: 'Email', width: '15%' },
+        { key: 'address', label: 'Address', width: '25%' },
+        {
+            key: 'isActive',
+            label: 'Status',
+            width: '10%',
+            render: (item) => (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
+                  item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {item.isActive ? 'Active' : 'Inactive'}
+                </span>
+            )
+        }
+    ];
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -51,92 +184,127 @@ const AddVendorPage = ({ onStepChange, onMarkCompleted }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!formData.vendorName || !formData.vendorCode) {
+
+        if (!formData.vendorName || !formData.phone || !formData.email || !formData.address) {
             return;
         }
 
-        setIsSubmitting(true);
-        
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
-            onMarkCompleted('add-vendor');
-            
-            // Add new vendor to list
-            const newVendor = {
-                id: String(vendors.length + 1),
-                businessName: formData.businessName,
-                city: formData.city,
-                address: formData.address,
+        setSubmitError(null);
+        createVendor(
+            {
+                vendorName: formData.vendorName,
                 contactPerson: formData.contactPerson,
-                emailId: formData.emailId,
-                primaryContactNumber: formData.primaryContactNumber,
-                secondaryContactNumber: formData.secondaryContactNumber,
+                phone: formData.phone,
+                email: formData.email,
+                address: formData.address,
                 isActive: formData.isActive
-            };
-            setVendors(prev => [...prev, newVendor]);
-            
-            // Reset form
-            setFormData({
-                businessName: '',
-                city: '',
-                address: '',
-                contactPerson: '',
-                emailId: '',
-                primaryContactNumber: '',
-                secondaryContactNumber: '',
-                isActive: true
-            });
-        }, 1500);
+            },
+            {
+                onSuccess: () => {
+                    onMarkCompleted?.('add-vendor');
+                    setFormData({
+                        vendorName: '',
+                        phone: '',
+                        email: '',
+                        address: '',
+                        contactPerson: '',
+                        isActive: true
+                    });
+                },
+            }
+        );
     };
 
     const handleCancel = () => {
         setFormData({
             vendorName: '',
-            vendorCode: '',
-            contactPerson: '',
-            email: '',
             phone: '',
+            email: '',
             address: '',
-            city: '',
-            country: '',
-            paymentTerms: '',
-            taxId: '',
-            description: '',
+            contactPerson: '',
             isActive: true
         });
     };
 
-    const handleToggleStatus = (vendorId) => {
-        setVendors(prev => prev.map(vendor => 
-            vendor.id === vendorId ? { ...vendor, isActive: !vendor.isActive } : vendor
-        ));
-    };
+    const handleToggleStatus = (vendor, index, nextValue) => {
+        const vendorId = getVendorId(vendor);
+        const targetVendor = normalizedVendors.find((item) => String(item.id) === String(vendorId));
+        if (!targetVendor) return;
 
-    const handleEdit = (vendor) => {
-        setFormData({
-            businessName: vendor.businessName,
-            city: vendor.city,
-            address: vendor.address,
-            contactPerson: vendor.contactPerson,
-            emailId: vendor.emailId,
-            primaryContactNumber: vendor.primaryContactNumber,
-            secondaryContactNumber: vendor.secondaryContactNumber,
-            isActive: vendor.isActive
+        updateVendor({
+            id: vendorId,
+            data: {
+                vendorName: targetVendor.vendorName,
+                contactPerson: targetVendor.contactPerson,
+                phone: targetVendor.phone,
+                email: targetVendor.email,
+                address: targetVendor.address,
+                isActive: typeof nextValue === 'boolean' ? nextValue : !targetVendor.isActive,
+            },
         });
     };
 
+    const handleEdit = (vendor) => {
+        setSelectedVendor(vendor);
+        setEditVendorName(vendor.vendorName || vendor.businessName || vendor.name || '');
+        setEditPhone(vendor.phone || vendor.primaryContactNumber || '');
+        setEditEmail(vendor.email || vendor.emailId || '');
+        setEditAddress(vendor.address || '');
+        setEditContactPerson(vendor.contactPerson || '');
+        setUpdateError(null);
+        setShowEditModal(true);
+    };
+
+    const handleUpdateVendor = (onSuccess) => {
+        if (!editVendorName.trim() || !editPhone.trim() || !editEmail.trim() || !editAddress.trim()) {
+            setUpdateError('Vendor Name, Phone, Email and Address are required.');
+            return;
+        }
+
+        updateVendor(
+            {
+                id: selectedVendor.id,
+                data: {
+                    vendorName: editVendorName,
+                    contactPerson: editContactPerson,
+                    phone: editPhone,
+                    email: editEmail,
+                    address: editAddress,
+                    isActive: selectedVendor.isActive,
+                },
+            },
+            {
+                onSuccess: () => {
+                    setShowEditModal(false);
+                    setSelectedVendor(null);
+                    onSuccess?.();
+                },
+            }
+        );
+    };
+
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setSelectedVendor(null);
+        setEditVendorName('');
+        setEditPhone('');
+        setEditEmail('');
+        setEditAddress('');
+        setEditContactPerson('');
+        setUpdateError(null);
+    };
+
     const handleDelete = (vendorId) => {
-        setVendors(prev => prev.filter(vendor => vendor.id !== vendorId));
+        const targetVendorId = getVendorId(vendorId);
+        if (!targetVendorId) return;
+        deleteVendor(targetVendorId);
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-lg p-8 h-full flex flex-col">
-            {/* Header Title */}
+        <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Add Vendor/Supplier</h1>
 
-            {isLoading ? (
+            {loading ? (
                 <div className="flex items-center justify-center h-96">
                     <div className="flex flex-col items-center gap-4">
                         <Loader size={48} className="animate-spin text-blue-600" />
@@ -147,189 +315,131 @@ const AddVendorPage = ({ onStepChange, onMarkCompleted }) => {
                 <>
                     {/* Form Section */}
                     <div className="mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            {/* Business Name */}
-                            <div>
-                                <FieldWrapper label="Business Name">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <FieldWrapper label="Vendor Name" required className="text-sm">
                                     <Input
-                                        name="businessName"
-                                        value={formData.businessName}
+                                        name="vendorName"
+                                        value={formData.vendorName}
                                         onChange={handleInputChange}
-                                        placeholder="Enter business name"
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
                                     />
                                 </FieldWrapper>
                             </div>
 
-                            {/* City */}
-                            <div>
-                                <FieldWrapper label="City">
+                            <div className="space-y-1">
+                                <FieldWrapper label="Phone" required className="text-sm">
                                     <Input
-                                        name="city"
-                                        value={formData.city}
+                                        name="phone"
+                                        value={formData.phone}
                                         onChange={handleInputChange}
-                                        placeholder="Enter city"
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
                                     />
                                 </FieldWrapper>
                             </div>
 
-                            {/* Address */}
-                            <div>
-                                <FieldWrapper label="Address">
+                            <div className="space-y-1">
+                                <FieldWrapper label="Email" required className="text-sm">
+                                    <Input
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
+                                    />
+                                </FieldWrapper>
+                            </div>
+
+                            <div className="space-y-1">
+                                <FieldWrapper label="Address" required className="text-sm">
                                     <Input
                                         name="address"
                                         value={formData.address}
                                         onChange={handleInputChange}
-                                        placeholder="Enter address"
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
                                     />
                                 </FieldWrapper>
                             </div>
+                        </div>
 
-                            {/* Contact Person */}
-                            <div>
-                                <FieldWrapper label="Contact Person">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            <div className="space-y-1">
+                                <FieldWrapper label="Contact Person" required className="text-sm">
                                     <Input
                                         name="contactPerson"
                                         value={formData.contactPerson}
                                         onChange={handleInputChange}
-                                        placeholder="Enter contact person name"
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
                                     />
                                 </FieldWrapper>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            {/* Primary Contact Number */}
-                            <div>
-                                <FieldWrapper label="Primary Contact Number">
-                                    <Input
-                                        name="primaryContactNumber"
-                                        value={formData.primaryContactNumber}
-                                        onChange={handleInputChange}
-                                        placeholder="Enter primary contact number"
-                                    />
-                                </FieldWrapper>
-                            </div>
-
-                            {/* Secondary Contact Number */}
-                            <div>
-                                <FieldWrapper label="Secondary Contact Number">
-                                    <Input
-                                        name="secondaryContactNumber"
-                                        value={formData.secondaryContactNumber}
-                                        onChange={handleInputChange}
-                                        placeholder="Enter secondary contact number"
-                                    />
-                                </FieldWrapper>
-                            </div>
-                        </div>
-
-                            {/* Email ID */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <FieldWrapper label="Email ID">
-                                    <Input
-                                        name="emailId"
-                                        value={formData.emailId}
-                                        onChange={handleInputChange}
-                                        placeholder="Enter email ID"
-                                    />
-                                </FieldWrapper>
-                            </div>
-                        {/* Action Buttons */}
-                        <div className="flex gap-4 justify-center">
+                        <div className="flex gap-3 md:pt-4 mt-4 md:mt-6 justify-end">
                             <button
                                 onClick={handleCancel}
-                                className="px-10 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+                                className="w-40 py-3.5 border border-customBlue text-customBlue hover:bg-gray-50 rounded-lg text-md font-medium transition cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="px-10 py-3 bg-customBlue text-white font-semibold rounded-lg hover:bg-customBlue/90 transition disabled:opacity-50 flex items-center gap-2"
+                                disabled={isCreating}
+                                className="w-40 py-3.5 bg-customBlue text-white hover:bg-customBlue/90 rounded-lg text-md font-medium transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {isSubmitting && <Loader size={18} className="animate-spin" />}
+                                {isCreating && <Loader size={18} className="animate-spin" />}
                                 Save
                             </button>
                         </div>
+                        {submitError && <p className="mt-3 text-sm text-red-600">{submitError}</p>}
                     </div>
 
-                    {/* Divider */}
                     <div className="border-t border-gray-300 my-8"></div>
 
-                    {/* Search Section */}
-                    <div className="mb-6">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-customBlue bg-white text-gray-700 placeholder-gray-500"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Vendors List */}
-                    <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-                        {filteredVendors.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <p className="font-medium">No vendors found matching your search</p>
-                            </div>
-                        ) : (
-                            filteredVendors.map((vendor, index) => (
-                                <div
-                                    key={vendor.id}
-                                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-customBlue transition-all"
-                                >
-                                    {/* Row Number */}
-                                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-sm font-bold text-blue-600">{index + 1}</span>
-                                    </div>
-
-                                    {/* Vendor Name */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{vendor.businessName}</p>
-                                        {vendor.contactPerson && <p className="text-xs text-gray-500">Contact: {vendor.contactPerson}</p>}
-                                        {vendor.city && <p className="text-xs text-gray-500">{vendor.city}</p>}
-                                    </div>
-
-                                    {/* Status Toggle */}
-                                    <button
-                                        onClick={() => handleToggleStatus(vendor.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            vendor.isActive 
-                                                ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                        title={vendor.isActive ? 'Deactivate' : 'Activate'}
-                                    >
-                                        <Power size={16} />
-                                    </button>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 flex-shrink-0">
-                                        <button
-                                            onClick={() => handleEdit(vendor)}
-                                            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(vendor.id)}
-                                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                    {/* Vendors Table */}
+                    <div className="pb-6 md:pb-8">
+                        <DataTable
+                            isLoading={loading}
+                            error={tableError}
+                            items={filteredVendors}
+                            columns={tableColumns}
+                            showView={false}
+                            showEdit={true}
+                            showDelete={true}
+                            showToggle={true}
+                            searchQuery={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onToggle={handleToggleStatus}
+                            tabName="Vendor"
+                        />
                     </div>
                 </>
             )}
+
+            {/* Edit Modal */}
+            <EditModal
+                isOpen={showEditModal}
+                selectedItem={selectedVendor}
+                onUpdate={handleUpdateVendor}
+                onClose={handleCloseEditModal}
+                isUpdating={isUpdating}
+                error={updateError}
+                title="Edit Vendor/Supplier"
+                itemType="vendor"
+                fields={[
+                    { label: "Vendor Name",   value: editVendorName,   onChange: setEditVendorName   },
+                    { label: "Contact Person", value: editContactPerson, onChange: setEditContactPerson },
+                    { label: "Phone",          value: editPhone,        onChange: setEditPhone        },
+                    { label: "Email",          value: editEmail,        onChange: setEditEmail        },
+                    { label: "Address",        value: editAddress,      onChange: setEditAddress      },
+                ]}
+            />
         </div>
     );
 };

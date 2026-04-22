@@ -52,7 +52,7 @@ const SetupLayoutPage = () => {
 
             {/* Horizontal Steps Navigation */}
             <div className="px-4 py-6">
-                <div className="flex items-center justify-between gap-3 mb-6 w-full">
+                <div className="flex items-center justify-between gap-3 mb-6 w-full flex-wrap">
                     {steps.map((step) => {
                         const isActive = currentStep === step.id;
                         const isCompleted = completedSteps.includes(step.id);
@@ -62,7 +62,7 @@ const SetupLayoutPage = () => {
                                 key={step.id}
                                 onClick={() => handleStepChange(step.id)}
                                 className={`
-                                    flex-1 px-6 py-4 rounded-lg border-2 transition-all duration-200 font-medium text-base
+                                    flex-1 px-6 py-4 rounded-lg border-2 transition-all duration-200 font-medium text-base cursor-pointer whitespace-nowrap
                                     ${isActive 
                                         ? 'border-customBlue bg-customBlue text-white shadow-md' 
                                         : isCompleted 

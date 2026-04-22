@@ -6,7 +6,7 @@ import FieldWrapper from '../../ui/FieldWrapper';
 import Input from '../../ui/Input';
 import Textarea from '../../ui/TextArea';
 
-const OverviewPage = () => {
+const  OverviewPage = () => {
     const [activeSubTab, setActiveSubTab] = useState('inventory-card');
     const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);

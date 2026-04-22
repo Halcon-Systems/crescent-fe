@@ -1,46 +1,164 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit2, Trash2, Power, Loader } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader } from 'lucide-react';
+import DataTable from '../../../components/DataTable';
 import FieldWrapper from '../../../ui/FieldWrapper';
 import Input from '../../../ui/Input';
-import Select from '../../../ui/Select';
-import Textarea from '../../../ui/TextArea';
+import EditModal from '@/components/components/EditModal';
+import { useStores } from '@/hooks/inventory/setup/useStores';
+import { useCreateStore } from '@/hooks/inventory/setup/useCreateStore';
+import { useUpdateStore } from '@/hooks/inventory/setup/useUpdateStore';
+import { useDeleteStore } from '@/hooks/inventory/setup/useDeleteStore';
 
 const AddStorePage = ({ onStepChange, onMarkCompleted }) => {
-    const [stores, setStores] = useState([
-        { id: '1', name: 'Main Store', location: 'Building A', officeId: '1', isActive: true },
-        { id: '2', name: 'Warehouse', location: 'Building B', officeId: '2', isActive: true },
-        { id: '3', name: 'Storage Unit', location: 'Building C', officeId: '1', isActive: false }
-    ]);
-    
+    const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
         storeName: '',
-        storeCode: '',
         location: '',
-        managerName: '',
-        contactNumber: '',
-        email: '',
-        address: '',
-        description: '',
-        capacity: '',
         isActive: true,
-        officeId: ''
+    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedStore, setSelectedStore] = useState(null);
+    const [editStoreName, setEditStoreName] = useState('');
+    const [editLocation, setEditLocation] = useState('');
+    const [updateError, setUpdateError] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
+
+    const normalizeList = (data) => {
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        if (Array.isArray(data?.items)) return data.items;
+        return [];
+    };
+
+    const setStoresQueryData = (updater) => {
+        queryClient.setQueryData(['stores'], (current) => {
+            const currentList = normalizeList(current);
+            const nextList = typeof updater === 'function' ? updater(currentList) : updater;
+
+            if (Array.isArray(current)) return nextList;
+            if (Array.isArray(current?.data)) return { ...current, data: nextList };
+            if (Array.isArray(current?.items)) return { ...current, items: nextList };
+
+            return nextList;
+        });
+    };
+
+    const storesQuery = useStores();
+    const stores = useMemo(() => normalizeList(storesQuery.data), [storesQuery.data]);
+    const loading = storesQuery.isLoading;
+    const tableError = storesQuery.error?.message || null;
+
+    const { mutate: createStore, isPending: isCreating } = useCreateStore({
+        onMutate: async (newStore) => {
+            await queryClient.cancelQueries({ queryKey: ['stores'] });
+            const previousStores = queryClient.getQueryData(['stores']);
+            const tempStore = {
+                id: `temp-${Date.now()}`,
+                ...newStore,
+            };
+
+            setStoresQueryData((currentList) => [tempStore, ...currentList]);
+
+            return { previousStores };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousStores !== undefined) {
+                queryClient.setQueryData(['stores'], context.previousStores);
+            }
+            setSubmitError(error?.response?.data?.message || error?.message || 'Failed to create store.');
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['stores'] });
+        },
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const { mutate: updateStore, isPending: isUpdating } = useUpdateStore({
+        onMutate: async ({ id, data }) => {
+            await queryClient.cancelQueries({ queryKey: ['stores'] });
+            const previousStores = queryClient.getQueryData(['stores']);
 
-    const offices = [
-        { id: '1', name: 'Head Office' },
-        { id: '2', name: 'Branch Office' }
-    ];
+            setStoresQueryData((currentList) =>
+                currentList.map((store) => {
+                    if (String(getStoreId(store)) !== String(id)) return store;
+                    return {
+                        ...store,
+                        ...data,
+                        id: getStoreId(store) ?? id,
+                    };
+                })
+            );
 
-    const filteredStores = stores.filter(store =>
-        store.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            return { previousStores };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousStores !== undefined) {
+                queryClient.setQueryData(['stores'], context.previousStores);
+            }
+            setUpdateError(error?.response?.data?.message || error?.message || 'Failed to update store.');
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['stores'] });
+        },
+    });
+
+    const { mutate: deleteStore } = useDeleteStore({
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ['stores'] });
+            const previousStores = queryClient.getQueryData(['stores']);
+
+            setStoresQueryData((currentList) =>
+                currentList.filter((store) => String(getStoreId(store)) !== String(id))
+            );
+
+            return { previousStores };
+        },
+        onError: (error, variables, context) => {
+            if (context?.previousStores !== undefined) {
+                queryClient.setQueryData(['stores'], context.previousStores);
+            }
+        },
+        onSettled: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['stores'] });
+        },
+    });
+
+    const normalizedStores = stores.map((store) => ({
+        ...store,
+        id: store.id ?? store.storeId ?? store._id ?? store.store_id,
+        storeName: store.storeName || store.name || '',
+    }));
+
+    const getStoreId = (store) => {
+        if (!store) return null;
+        if (typeof store === 'string' || typeof store === 'number') return store;
+        return store.id ?? store.storeId ?? store._id ?? store.store_id ?? null;
+    };
+
+    const filteredStores = normalizedStores.filter(store =>
+        store.storeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         store.location?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const tableColumns = [
+        { key: 'storeName', label: 'Store Name', width: '20%' },
+        { key: 'location', label: 'Location', width: '20%' },
+        {
+            key: 'isActive',
+            label: 'Status',
+            width: '15%',
+            render: (item) => (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
+                  item.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                }`}>
+                  {item.isActive ? 'Active' : 'Inactive'}
+                </span>
+            )
+        }
+    ];
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -52,87 +170,98 @@ const AddStorePage = ({ onStepChange, onMarkCompleted }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!formData.storeName || !formData.storeCode || !formData.location) {
+
+        if (!formData.storeName || !formData.location) {
             return;
         }
 
-        setIsSubmitting(true);
-        
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
-            onMarkCompleted('add-store');
-            
-            // Add new store to list
-            const newStore = {
-                id: String(stores.length + 1),
-                name: formData.storeName,
+        setSubmitError(null);
+        createStore(
+            {
+                storeName: formData.storeName,
                 location: formData.location,
-                officeId: formData.officeId,
-                isActive: formData.isActive
-            };
-            setStores(prev => [...prev, newStore]);
-            
-            // Reset form
-            setFormData({
-                storeName: '',
-                storeCode: '',
-                location: '',
-                managerName: '',
-                contactNumber: '',
-                email: '',
-                address: '',
-                description: '',
-                capacity: '',
-                isActive: true,
-                officeId: ''
-            });
-        }, 1500);
+                isActive: formData.isActive,
+            },
+            {
+                onSuccess: () => {
+                    onMarkCompleted?.('add-store');
+                    setFormData({ storeName: '', location: '', isActive: true });
+                },
+            }
+        );
     };
 
     const handleCancel = () => {
-        setFormData({
-            storeName: '',
-            storeCode: '',
-            location: '',
-            managerName: '',
-            contactNumber: '',
-            email: '',
-            address: '',
-            description: '',
-            capacity: '',
-            isActive: true,
-            officeId: ''
-        });
+        setFormData({ storeName: '', location: '', isActive: true });
     };
 
-    const handleToggleStatus = (storeId) => {
-        setStores(prev => prev.map(store => 
-            store.id === storeId ? { ...store, isActive: !store.isActive } : store
-        ));
+    const handleToggleStatus = (store, index, nextValue) => {
+        const storeId = getStoreId(store);
+        const targetStore = normalizedStores.find(item => String(item.id) === String(storeId));
+        if (!targetStore) return;
+
+        updateStore({
+            id: storeId,
+            data: {
+                storeName: targetStore.storeName,
+                location: targetStore.location,
+                isActive: typeof nextValue === 'boolean' ? nextValue : !targetStore.isActive,
+            },
+        });
     };
 
     const handleEdit = (store) => {
-        setFormData({
-            storeName: store.name,
-            storeCode: store.id,
-            location: store.location,
-            officeId: store.officeId,
-            isActive: store.isActive
-        });
+        setSelectedStore(store);
+        setEditStoreName(store.storeName || store.name || '');
+        setEditLocation(store.location || '');
+        setUpdateError(null);
+        setShowEditModal(true);
+    };
+
+    const handleUpdateStore = (onSuccess) => {
+        if (!editStoreName.trim() || !editLocation.trim()) {
+            setUpdateError('Store Name and Location are required.');
+            return;
+        }
+
+        updateStore(
+            {
+                id: selectedStore.id,
+                data: {
+                    storeName: editStoreName,
+                    location: editLocation,
+                    isActive: selectedStore.isActive,
+                },
+            },
+            {
+                onSuccess: () => {
+                    setShowEditModal(false);
+                    setSelectedStore(null);
+                    onSuccess?.();
+                },
+            }
+        );
+    };
+
+    const handleCloseEditModal = () => {
+        setShowEditModal(false);
+        setSelectedStore(null);
+        setEditStoreName('');
+        setEditLocation('');
+        setUpdateError(null);
     };
 
     const handleDelete = (storeId) => {
-        setStores(prev => prev.filter(store => store.id !== storeId));
+        const targetStoreId = getStoreId(storeId);
+        if (!targetStoreId) return;
+        deleteStore(targetStoreId);
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-lg p-8 h-full flex flex-col">
-            {/* Header Title */}
+        <>
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Add Store</h1>
 
-            {isLoading ? (
+            {loading ? (
                 <div className="flex items-center justify-center h-96">
                     <div className="flex flex-col items-center gap-4">
                         <Loader size={48} className="animate-spin text-blue-600" />
@@ -143,135 +272,91 @@ const AddStorePage = ({ onStepChange, onMarkCompleted }) => {
                 <>
                     {/* Form Section */}
                     <div className="mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            {/* Store Name */}
-                            <div>
-                                <FieldWrapper label="Store Name">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-1">
+                                <FieldWrapper label="Store Name" required className="text-sm">
                                     <Input
                                         name="storeName"
                                         value={formData.storeName}
                                         onChange={handleInputChange}
-                                        placeholder="Enter store name"
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
                                     />
                                 </FieldWrapper>
                             </div>
 
-                            {/* Office Dropdown */}
-                            <div>
-                                <FieldWrapper label="Select Office">
-                                    <select
-                                        name="officeId"
-                                        value={formData.officeId}
+                            <div className="space-y-1">
+                                <FieldWrapper label="Location" required className="text-sm">
+                                    <Input
+                                        name="location"
+                                        value={formData.location}
                                         onChange={handleInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-customBlue text-sm"
-                                    >
-                                        <option value="">Select Office</option>
-                                        {offices.map((office) => (
-                                            <option key={office.id} value={office.id}>
-                                                {office.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        placeholder="Type here"
+                                        className="text-sm py-2"
+                                    />
                                 </FieldWrapper>
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-4 justify-center">
+                        <div className="flex gap-3 md:pt-4 mt-4 md:mt-6 justify-end">
                             <button
                                 onClick={handleCancel}
-                                className="px-10 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+                                className="w-40 py-3.5 border border-customBlue text-customBlue hover:bg-gray-50 rounded-lg text-md font-medium transition cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="px-10 py-3 bg-customBlue text-white font-semibold rounded-lg hover:bg-customBlue/90 transition disabled:opacity-50 flex items-center gap-2"
+                                disabled={isCreating}
+                                className="w-40 py-3.5 bg-customBlue text-white hover:bg-customBlue/90 rounded-lg text-md font-medium transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {isSubmitting && <Loader size={18} className="animate-spin" />}
+                                {isCreating && <Loader size={18} className="animate-spin" />}
                                 Save
                             </button>
                         </div>
+                        {submitError && <p className="mt-3 text-sm text-red-600">{submitError}</p>}
                     </div>
 
-                    {/* Divider */}
                     <div className="border-t border-gray-300 my-8"></div>
 
-                    {/* Search Section */}
-                    <div className="mb-6">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-customBlue bg-white text-gray-700 placeholder-gray-500"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Stores List */}
-                    <div className="space-y-3 overflow-y-auto flex-1 pr-2">
-                        {filteredStores.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <p className="font-medium">No stores found matching your search</p>
-                            </div>
-                        ) : (
-                            filteredStores.map((store, index) => (
-                                <div
-                                    key={store.id}
-                                    className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-customBlue transition-all"
-                                >
-                                    {/* Row Number */}
-                                    <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-sm font-bold text-blue-600">{index + 1}</span>
-                                    </div>
-
-                                    {/* Store Name */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{store.name}</p>
-                                        {store.location && <p className="text-xs text-gray-500">{store.location}</p>}
-                                    </div>
-
-                                    {/* Status Toggle */}
-                                    <button
-                                        onClick={() => handleToggleStatus(store.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                            store.isActive 
-                                                ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                        }`}
-                                        title={store.isActive ? 'Deactivate' : 'Activate'}
-                                    >
-                                        <Power size={16} />
-                                    </button>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex gap-2 flex-shrink-0">
-                                        <button
-                                            onClick={() => handleEdit(store)}
-                                            className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                                            title="Edit"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(store.id)}
-                                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
-                        )}
+                    {/* Stores Table */}
+                    <div className="pb-6 md:pb-8">
+                        <DataTable
+                            isLoading={loading}
+                            error={tableError}
+                            items={filteredStores}
+                            columns={tableColumns}
+                            showView={false}
+                            showEdit={true}
+                            showDelete={true}
+                            showToggle={true}
+                            searchQuery={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onToggle={handleToggleStatus}
+                            tabName="Store"
+                        />
                     </div>
                 </>
             )}
-        </div>
+
+            {/* Edit Modal — same pattern as AddOfficeTabContent */}
+            <EditModal
+                isOpen={showEditModal}
+                selectedItem={selectedStore}
+                onUpdate={handleUpdateStore}
+                onClose={handleCloseEditModal}
+                isUpdating={isUpdating}
+                error={updateError}
+                title="Edit Store"
+                itemType="store"
+                fields={[
+                    { label: "Store Name", value: editStoreName, onChange: setEditStoreName },
+                    { label: "Location",   value: editLocation,  onChange: setEditLocation  },
+                ]}
+            />
+        </>
     );
 };
 

@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useMemo } from "react";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
-import FormActions from "../components/FormActions";
-import SearchList from "../components/SearchList";
-import EditModal from "../components/EditModal";
-import ViewModal from "../components/ViewModal";
-import ValidationErrorModal from "../components/ValidationErrorModal";
+import FormActions from "@/components/components/FormActions";
+import SearchList from "@/components/components/SearchList";
+import EditModal from "@/components/components/EditModal";
+import ViewModal from "@/components/components/ViewModal";
+import ValidationErrorModal from "@/components/components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 import { useClientCategories } from "@/hooks/client-category/useClientCategories";
 import { useCreateClientCategory } from "@/hooks/client-category/useCreateClientCategory";

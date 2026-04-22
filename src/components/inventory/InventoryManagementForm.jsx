@@ -25,7 +25,7 @@ const InventoryManagementForm = () => {
   return (
     <div className="bg-white rounded-xl shadow p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 min-h-[500px]">
       {/* Left tabs - vertical on desktop */}
-      <div className="flex flex-col items-stretch gap-2 md:gap-3 md:w-48 shrink-0">
+      <div className="flex flex-col items-stretch gap-2 md:gap-3 md:w-48 shrink-0 white">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -33,7 +33,7 @@ const InventoryManagementForm = () => {
             className={`
               w-full px-4 py-3 text-sm md:text-base 
               flex items-center justify-center rounded-lg transition-all duration-200
-              whitespace-normal text-center min-h-[48px] md:min-h-[56px]
+              whitespace-nowrap text-center min-h-[48px] md:min-h-[56px]
               ${activeTab === tab.key 
                 ? "bg-customBlue text-white shadow-md" 
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300 cursor-pointer"}

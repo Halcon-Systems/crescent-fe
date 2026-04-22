@@ -9,11 +9,11 @@ import { useCities } from "@/hooks/city/useCities";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import FormActions from "../components/FormActions";
-import SearchList from "../components/SearchList";
-import EditModal from "../components/EditModal";
-import ViewModal from "../components/ViewModal";
-import ValidationErrorModal from "../components/ValidationErrorModal";
+import FormActions from "@/components/components/FormActions";
+import SearchList from "@/components/components/SearchList";
+import EditModal from "@/components/components/EditModal";
+import ViewModal from "@/components/components/ViewModal";
+import ValidationErrorModal from "@/components/components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
 const VendorsTabContent = () => {

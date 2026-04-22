@@ -6,15 +6,15 @@ import { useBankAccounts } from "@/hooks/bank-account/useBankAccounts";
 import { useCreateBankAccount } from "@/hooks/bank-account/useCreateBankAccount";
 import { useUpdateBankAccount } from "@/hooks/bank-account/useUpdateBankAccount";
 import { useDeleteBankAccount } from "@/hooks/bank-account/useDeleteBankAccount";
-import SearchList from "../components/SearchList";
-import EditModal from "../components/EditModal";
-import ViewModal from "../components/ViewModal";
-import ValidationErrorModal from "../components/ValidationErrorModal";
+import SearchList from "@/components/components/SearchList";
+import EditModal from "@/components/components/EditModal";
+import ViewModal from "@/components/components/ViewModal";
+import ValidationErrorModal from "@/components/components/ValidationErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 import FieldWrapper from "@/components/ui/FieldWrapper";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import FormActions from "../components/FormActions";
+import FormActions from "@/components/components/FormActions";
 
 const AddBankAccountTabContent = () => {
   // Add form states (for creating new accounts)

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import FormActions from "./components/FormActions";
-import SearchList from "./components/SearchList";
+import FormActions from "@/components/components/FormActions";
+import SearchList from "@/components/components/SearchList";
 import AddOfficeTabContent from "./tabs/AddOfficeTabContent";
 import AddProductsTabContent from "./tabs/AddProductsTabContent";
 import AddBankAccountTabContent from "./tabs/AddBankAccountTabContent";
