@@ -1,12 +1,20 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { Plus, Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, X, Minus, Loader, AlertCircle, CheckCircle } from 'lucide-react';
+import { useGetAllGRNs } from '@/hooks/inventory/Grn/useGetAllGRNs';
+import { useCreateGRN } from '@/hooks/inventory/Grn/useCreateGRN';
+import { useDeleteGRN } from '@/hooks/inventory/Grn/useDeleteGRN';
+import { useConfirmGRN } from '@/hooks/inventory/Grn/useConfirmGRN';
+import { useUpdateGRN } from '@/hooks/inventory/Grn/useUpdateGRN';
+import { usePurchaseOrders } from '@/hooks/inventory/purchase orders/usePurchaseOrders';
+import { useDropdownItems } from '@/hooks/inventory/utility/useDropdownItems';
+import { useDropdownStores } from '@/hooks/inventory/utility/useDropdownStores';
+import { useDropdownVendors } from '@/hooks/inventory/utility/useDropdownVendors';
+import { normalizeApiList } from '@/lib/normalizeApiList';
 
 const ReceiveGRNPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [grns, setGrns] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [receiving, setReceiving] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,13 +22,7 @@ const ReceiveGRNPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
-  const [loadingPOs, setLoadingPOs] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
-  const [items, setItems] = useState([]);
-  const [stores, setStores] = useState([]);
-  const [vendors, setVendors] = useState([]);
-  const [loadingVendors, setLoadingVendors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [grnItems, setGrnItems] = useState([]);
   const [selectedRows, setSelectedRows] = useState(new Set());
@@ -43,41 +45,34 @@ const ReceiveGRNPage = () => {
   const [previewGrn, setPreviewGrn] = useState(null); // GRN being previewed
   const [editingGrnId, setEditingGrnId] = useState(null); // ID of GRN being edited
 
+  const { data: grnsRaw, isLoading: loading } = useGetAllGRNs();
+  const { data: purchaseOrdersRaw, isLoading: loadingPOs } = usePurchaseOrders();
+  const { data: itemsRaw } = useDropdownItems();
+  const { data: storesRaw } = useDropdownStores();
+  const { data: vendorsRaw, isLoading: loadingVendors } = useDropdownVendors();
+  const { mutateAsync: createGRN } = useCreateGRN();
+  const { mutateAsync: updateGRN } = useUpdateGRN();
+  const { mutateAsync: deleteGRN } = useDeleteGRN();
+  const { mutateAsync: confirmGRN } = useConfirmGRN();
+
+  const grns = normalizeApiList(grnsRaw);
+  const purchaseOrders = normalizeApiList(purchaseOrdersRaw);
+  const items = normalizeApiList(itemsRaw);
+  const vendors = normalizeApiList(vendorsRaw);
+
+  const stores = useMemo(
+    () =>
+      normalizeApiList(storesRaw).map((store) => ({
+        id: store.id ?? store.storeId ?? store._id,
+        name: store.name || store.storeName || store.label || 'N/A',
+      })),
+    [storesRaw]
+  );
+
   useEffect(() => {
-    fetchGrns();
-    fetchPurchaseOrders();
-    fetchItems();
-    fetchStores();
-    fetchVendors();
-  }, []);
-
-  const fetchGrns = () => {
-    setLoading(true);
-    setGrns([]);
-    setTotalItems(0);
-    setTotalPages(0);
-    setLoading(false);
-  };
-
-  const fetchPurchaseOrders = () => {
-    setLoadingPOs(true);
-    setPurchaseOrders([]);
-    setLoadingPOs(false);
-  };
-
-  const fetchItems = () => {
-    setItems([]);
-  };
-
-  const fetchStores = () => {
-    setStores([]);
-  };
-
-  const fetchVendors = () => {
-    setLoadingVendors(true);
-    setVendors([]);
-    setLoadingVendors(false);
-  };
+    setTotalItems(grns.length);
+    setTotalPages(Math.ceil(grns.length / itemsPerPage));
+  }, [grns, itemsPerPage]);
 
   const filteredGrns = (Array.isArray(grns) ? grns : []).filter(grn =>
     grn.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,9 +125,13 @@ const ReceiveGRNPage = () => {
     const { id: grnId, grnNumber } = deleteConfirm;
 
     setDeleting(grnId);
-    toast.error(`Delete is unavailable until APIs are implemented (${grnNumber}).`);
-    setDeleteConfirm(null);
-    setDeleting(null);
+    deleteGRN(grnId)
+      .then(() => toast.success(`Deleted ${grnNumber}`))
+      .catch(() => toast.error('Failed to delete GRN'))
+      .finally(() => {
+        setDeleteConfirm(null);
+        setDeleting(null);
+      });
   };
 
   const cancelDelete = () => {
@@ -141,8 +140,10 @@ const ReceiveGRNPage = () => {
 
   const handleReceiveGrn = (grnId) => {
     setReceiving(grnId);
-    toast.error('Receive workflow is unavailable until APIs are implemented.');
-    setReceiving(null);
+    confirmGRN(grnId)
+      .then(() => toast.success('GRN confirmed successfully.'))
+      .catch(() => toast.error('Failed to confirm GRN.'))
+      .finally(() => setReceiving(null));
   };
 
   const toggleRowSelection = (id) => {
@@ -205,8 +206,9 @@ const ReceiveGRNPage = () => {
     });
   };
 
-  const fetchPODetails = () => {
-    setSelectedPO(null);
+  const fetchPODetails = (poId) => {
+    const po = purchaseOrders.find((order) => String(order.id ?? order.purchaseOrderId) === String(poId));
+    setSelectedPO(po || null);
   };
 
   const handleGrnFormChange = (e) => {
@@ -311,9 +313,36 @@ const ReceiveGRNPage = () => {
   };
 
   const handleSubmitGRN = () => {
+    if (!grnFormData.poId || !grnFormData.storeId || !grnFormData.vendorId || grnItems.length === 0) {
+      toast.error('Please fill required fields and add at least one item.');
+      return;
+    }
     setSubmitting(true);
-    toast.error('Submission is unavailable until APIs are implemented.');
-    setSubmitting(false);
+    const payload = {
+      poId: grnFormData.poId,
+      storeId: grnFormData.storeId,
+      vendorId: grnFormData.vendorId,
+      grnType: grnFormData.grnType,
+      grnNumber: nextGrnNumber,
+      items: grnItems.map((item) => ({
+        itemId: item.itemId,
+        quantityReceived: item.quantityReceived,
+        quantityOrdered: item.quantityOrdered,
+        unitPrice: item.unitPrice,
+        conditionStatus: item.conditionStatus,
+      })),
+    };
+    const submitPromise = editingGrnId
+      ? updateGRN({ id: editingGrnId, data: payload })
+      : createGRN(payload);
+
+    submitPromise
+      .then(() => {
+        toast.success(editingGrnId ? 'GRN updated.' : 'GRN created.');
+        handleCloseModal();
+      })
+      .catch(() => toast.error('Failed to save GRN.'))
+      .finally(() => setSubmitting(false));
   };
 
   return (
@@ -353,7 +382,7 @@ const ReceiveGRNPage = () => {
 
         {/* Alert Box - 7-Step Transaction Info */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
-          <AlertCircle size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-blue-900">7-Step Atomic Transaction</p>
             <p className="text-xs text-blue-700 mt-1">Click "Receive" to start quality inspection. This will automatically: 1) Validate items, 2) Inspect quality, 3) Update PO, 4) Update inventory, 5) Record movements, 6) Update status, 7) Complete GRN.</p>
@@ -536,7 +565,7 @@ const ReceiveGRNPage = () => {
 
       {/* Create/Edit GRN Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg shadow-lg max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
@@ -792,7 +821,7 @@ const ReceiveGRNPage = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm">
           <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full mx-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
@@ -826,10 +855,10 @@ const ReceiveGRNPage = () => {
 
       {/* GRN Preview Modal */}
       {previewGrn && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-[90%] max-w-3xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="sticky top-0 flex justify-between items-center px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-25">
+            <div className="sticky top-0 flex justify-between items-center px-6 py-5 border-b border-gray-200 bg-linear-to-r from-blue-50 to-blue-25">
               <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">GRN Details</div>
               <button
                 onClick={closePreviewModal}

@@ -2,23 +2,32 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useInventoryCardReport } from '@/hooks/inventory/reports/useInventoryCardReport';
 
 const ReportsPage = () => {
-    const [data, setData] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const { data: reportData, isLoading } = useInventoryCardReport();
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = () => {
-        setIsLoading(true);
-        setData([]);
-        setIsLoading(false);
-    };
+    const data = useMemo(() => {
+        const raw = Array.isArray(reportData)
+            ? reportData
+            : Array.isArray(reportData?.data)
+                ? reportData.data
+                : [];
+        return raw.map((item, idx) => ({
+            id: item.id ?? item.inventoryCardId ?? idx + 1,
+            store: item.store || item.office || item.storeName || 'N/A',
+            issueNo: item.issueNo || item.issuanceNo || item.referenceNo || 'N/A',
+            serviceNo: item.serviceNo || item.guardServiceNo || 'N/A',
+            name: item.name || item.guardName || item.fullName || 'N/A',
+            itemSKU: item.itemSKU || item.sku || 'N/A',
+            itemGroup: item.itemGroup || item.groupName || 'N/A',
+            status: item.status || item.category || 'N/A',
+            category: item.category || item.categoryName || 'N/A',
+        }));
+    }, [reportData]);
 
     // Filter data based on search
     const filteredData = useMemo(() => {
@@ -50,10 +59,7 @@ const ReportsPage = () => {
         toast.success(`Edit item #${id}`);
     };
 
-    const handleDelete = (id) => {
-        setData(data.filter(item => item.id !== id));
-        toast.success('Item deleted successfully');
-    };
+    const handleDelete = (id) => toast.error('Delete is not available on reports.');
 
     // Pagination range display
     const paginationStart = Math.max(1, currentPage - 1);

@@ -12,6 +12,8 @@ import { useDropdownItems } from '@/hooks/inventory/utility/useDropdownItems';
 import { usePurchaseOrders } from '@/hooks/inventory/purchase orders/usePurchaseOrders';
 import { useCreatePurchaseOrder } from '@/hooks/inventory/purchase orders/useCreatePurchaseOrder';
 import { useDeletePurchaseOrder } from '@/hooks/inventory/purchase orders/useDeletePurchaseOrder';
+import { usePurchaseRequests } from '@/hooks/inventory/purchase request/usePurchaseRequests';
+import { resolveItemRecordId, resolveItemUnitOfMeasurement } from '@/lib/inventoryItemMeta';
 
 const PurchaseOrderPage = () => {
     const queryClient = useQueryClient();
@@ -63,6 +65,7 @@ const PurchaseOrderPage = () => {
     };
 
     const purchaseOrdersQuery = usePurchaseOrders();
+    const purchaseRequestsQuery = usePurchaseRequests();
     const officesQuery = useOffices(undefined, { enabled: true });
     const itemsQuery = useDropdownItems();
 
@@ -82,9 +85,9 @@ const PurchaseOrderPage = () => {
     const normalizedItems = useMemo(() => {
         return normalizeList(itemsQuery.data).map((item) => ({
             ...item,
-            id: item.id ?? item.itemId ?? item._id ?? item.value,
+            id: resolveItemRecordId(item) || (item.id ?? item.itemId ?? item._id ?? item.value),
             name: item.name || item.itemName || item.label || '',
-            unitOfMeasurement: item.unitOfMeasurement || item.uom || item.unit || '',
+            unitOfMeasurement: resolveItemUnitOfMeasurement(item),
             price: item.price ?? item.unitPrice ?? item.rate ?? 0,
         }));
     }, [itemsQuery.data]);
@@ -108,7 +111,32 @@ const PurchaseOrderPage = () => {
         }));
     }, [purchaseOrdersQuery.data]);
 
+    const normalizedPurchaseRequests = useMemo(() => {
+        return normalizeList(purchaseRequestsQuery.data).map((request) => ({
+            ...request,
+            id: request.id ?? request.requestId ?? request.purchaseRequestId ?? request._id,
+            requestNo: request.name || request.requestNo || request.purchaseRequestNo || `PR-${request.id ?? ''}`,
+            items: Array.isArray(request.items)
+                ? request.items
+                : Array.isArray(request.purchaseRequestItems)
+                    ? request.purchaseRequestItems
+                    : [],
+        }));
+    }, [purchaseRequestsQuery.data]);
+
+    const purchaseRequestOptions = useMemo(
+        () =>
+            normalizedPurchaseRequests
+                .filter((request) => request.id)
+                .map((request) => ({
+                    value: String(request.id),
+                    label: String(request.requestNo || `PR-${request.id}`),
+                })),
+        [normalizedPurchaseRequests]
+    );
+
     const resetForm = () => ({
+        purchaseRequestId: '',
         officeId: '',
         office: '',
         user: '1 - Admin User',
@@ -289,32 +317,19 @@ const PurchaseOrderPage = () => {
 
     const handleSubmit = () => {
         if (!formData.officeId) return;
-
-        const itemsToSubmit = [...formData.poItems];
-        if (formData.currentItem.itemId && formData.currentItem.unitPrice) {
-            itemsToSubmit.push({ ...formData.currentItem, id: Date.now() });
+        if (!formData.purchaseRequestId) {
+            setSubmitError('Please select a Purchase Request first.');
+            return;
         }
+        const itemsToSubmit = [...formData.poItems];
 
         if (itemsToSubmit.length === 0) return;
 
         setSubmitError('');
         createPurchaseOrder({
-            officeId: formData.officeId,
-            office: formData.office,
-            user: formData.user,
-            date: formData.date || new Date().toISOString(),
-            expectedDeliveryDate: formData.expectedDeliveryDate,
-            taxAmount: formData.taxAmount,
-            shippingCost: formData.shippingCost,
-            discountAmount: formData.discountAmount,
-            notes: formData.notes,
-            poItems: itemsToSubmit.map((item) => ({
-                itemId: item.itemId,
-                itemName: item.itemName,
-                unitOfMeasurement: item.unitOfMeasurement,
-                quantityOrdered: item.quantityOrdered,
-                unitPrice: item.unitPrice,
-                totalPrice: item.totalPrice,
+            lines: itemsToSubmit.map((item) => ({
+                itemId: Number(item.itemId),
+                qty: Math.max(1, Number.parseInt(item.quantityOrdered, 10) || 1),
             })),
         });
     };
@@ -351,8 +366,8 @@ const PurchaseOrderPage = () => {
 
             <div className="pb-6 md:pb-8">
                 <DataTable
-                    isLoading={purchaseOrdersQuery.isLoading || officesQuery.isLoading || itemsQuery.isLoading}
-                    error={purchaseOrdersQuery.error?.message || officesQuery.error?.message || itemsQuery.error?.message || null}
+                    isLoading={purchaseOrdersQuery.isLoading || purchaseRequestsQuery.isLoading || officesQuery.isLoading || itemsQuery.isLoading}
+                    error={purchaseOrdersQuery.error?.message || purchaseRequestsQuery.error?.message || officesQuery.error?.message || itemsQuery.error?.message || null}
                     items={filteredOrders}
                     columns={tableColumns}
                     showView={true}
@@ -378,7 +393,38 @@ const PurchaseOrderPage = () => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <FieldWrapper label="Purchase Request" required className="text-sm">
+                                    <Select
+                                        placeholder="Select PR"
+                                        value={formData.purchaseRequestId}
+                                        onChange={(e) => {
+                                            const selectedRequest = normalizedPurchaseRequests.find(
+                                                (req) => String(req.id) === String(e.target.value)
+                                            );
+                                            const requestItems = (selectedRequest?.items || []).map((item, index) => ({
+                                                id: item.id ?? item.itemId ?? `${Date.now()}-${index}`,
+                                                itemId: item.itemId ?? item.id ?? '',
+                                                itemName: item.itemName || item.name || '',
+                                                unitOfMeasurement: resolveItemUnitOfMeasurement(item),
+                                                quantityOrdered: Number(item.quantity ?? item.qty ?? item.quantityOrdered ?? 1),
+                                                unitPrice: String(item.unitPrice ?? item.price ?? 0),
+                                                totalPrice: String(
+                                                    (Number(item.quantity ?? item.qty ?? item.quantityOrdered ?? 1) || 1) *
+                                                    (Number(item.unitPrice ?? item.price ?? 0) || 0)
+                                                ),
+                                            }));
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                purchaseRequestId: e.target.value,
+                                                poItems: requestItems,
+                                            }));
+                                        }}
+                                        className="text-sm"
+                                        options={purchaseRequestOptions}
+                                    />
+                                </FieldWrapper>
+
                                 <FieldWrapper label="Office" required className="text-sm">
                                     <Select
                                         placeholder="Select Office"
@@ -407,6 +453,9 @@ const PurchaseOrderPage = () => {
                             </div>
 
                             <div className="border-t border-gray-200 pt-6 space-y-4">
+                                <p className="text-xs text-gray-500">
+                                    PO lines are auto-loaded from the selected Purchase Request.
+                                </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FieldWrapper label="Item Name" required className="text-sm">
                                         <Select
@@ -421,32 +470,33 @@ const PurchaseOrderPage = () => {
                                                         itemId: selected?.id || '',
                                                         itemName: selected?.name || '',
                                                         unitPrice: selected?.price ? String(selected.price) : prev.currentItem.unitPrice,
-                                                        unitOfMeasurement: selected?.unitOfMeasurement || ''
+                                                        unitOfMeasurement: resolveItemUnitOfMeasurement(selected || {})
                                                     }
                                                 }));
                                             }}
                                             className="text-sm"
                                             options={itemOptions}
+                                            disabled
                                         >
                                         </Select>
                                     </FieldWrapper>
 
                                     <FieldWrapper label="Unit of Measurement" className="text-sm">
-                                        <Input value={formData.currentItem.unitOfMeasurement} disabled placeholder="Auto" className="text-sm py-2 bg-gray-50" />
+                                        <Input value={formData.currentItem.unitOfMeasurement ?? ''} disabled placeholder="Auto" className="text-sm py-2 bg-gray-50" />
                                     </FieldWrapper>
                                 </div>
 
                                 <FieldWrapper label="Quantity Ordered" required className="text-sm">
                                     <div className="flex items-center gap-2">
                                         <button onClick={handleDecrement} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-semibold cursor-pointer">−</button>
-                                        <Input type="number" value={formData.currentItem.quantityOrdered} onChange={handleQuantityChange} min="1" className="text-sm py-2 text-center flex-1" />
+                                        <Input type="number" value={formData.currentItem.quantityOrdered} onChange={handleQuantityChange} min="1" className="text-sm py-2 text-center flex-1" disabled />
                                         <button onClick={handleIncrement} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-semibold cursor-pointer">+</button>
                                     </div>
                                 </FieldWrapper>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FieldWrapper label="Unit Price" required className="text-sm">
-                                        <Input type="number" value={formData.currentItem.unitPrice} onChange={handleUnitPriceChange} placeholder="0.00" step="0.01" min="0" className="text-sm py-2" />
+                                        <Input type="number" value={formData.currentItem.unitPrice} onChange={handleUnitPriceChange} placeholder="0.00" step="0.01" min="0" className="text-sm py-2" disabled />
                                     </FieldWrapper>
                                     <FieldWrapper label="Total Price" className="text-sm">
                                         <Input value={formData.currentItem.totalPrice} disabled placeholder="Auto calculated" className="text-sm py-2 bg-gray-50" />
@@ -457,7 +507,8 @@ const PurchaseOrderPage = () => {
                                     <button
                                         type="button"
                                         onClick={handleAddItem}
-                                        className="rounded-lg border border-customBlue px-4 py-2 text-sm font-medium text-customBlue hover:bg-blue-50"
+                                        className="rounded-lg border border-customBlue px-4 py-2 text-sm font-medium text-customBlue hover:bg-blue-50 opacity-50 cursor-not-allowed"
+                                        disabled
                                     >
                                         Add Item
                                     </button>

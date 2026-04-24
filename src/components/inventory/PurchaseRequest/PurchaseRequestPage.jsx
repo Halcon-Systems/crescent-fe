@@ -16,6 +16,7 @@ import { usePurchaseRequests } from '@/hooks/inventory/purchase request/usePurch
 import { useCreatePurchaseRequest } from '@/hooks/inventory/purchase request/useCreatePurchaseRequest';
 import { useUpdatePurchaseRequest } from '@/hooks/inventory/purchase request/useUpdatePurchaseRequest';
 import { useDeletePurchaseRequest } from '@/hooks/inventory/purchase request/useDeletePurchaseRequest';
+import { resolveItemRecordId, resolveItemUnitOfMeasurement } from '@/lib/inventoryItemMeta';
 
 const PurchaseRequestPage = () => {
   const queryClient = useQueryClient();
@@ -65,10 +66,10 @@ const PurchaseRequestPage = () => {
   const normalizeItems = (data) => {
     return normalizeList(data).map((item) => ({
       ...item,
-      id: item.id ?? item.itemId ?? item._id,
+      id: resolveItemRecordId(item) || (item.id ?? item.itemId ?? item._id),
       name: item.name || item.itemName || '',
       sku: item.sku || item.itemSku || '',
-      unitOfMeasurement: item.unitOfMeasurement || item.uom || '',
+      unitOfMeasurement: resolveItemUnitOfMeasurement(item),
       price: item.price ?? item.unitPrice ?? 0,
     }));
   };
@@ -97,19 +98,19 @@ const PurchaseRequestPage = () => {
       ...store,
       id: store.id ?? store.storeId ?? store._id ?? store.value,
       name: store.name || store.storeName || store.label || '',
-      officeId: store.officeId ?? store.office?.id ?? store.branchId ?? store.office?.officeId ?? '',
     })),
     [storesQuery.data]
   );
 
   const storeOptions = useMemo(
-    () => stores
-      .filter((store) => !purchaseFormData.officeId || String(store.officeId) === String(purchaseFormData.officeId))
-      .map((store) => ({ value: String(store.id), label: store.name })),
-    [stores, purchaseFormData.officeId]
+    () => stores.map((store) => ({ value: String(store.id), label: store.name })),
+    [stores]
   );
 
   const items = useMemo(() => normalizeItems(itemsQuery.data), [itemsQuery.data]);
+
+  const findItemById = (rawId) =>
+    items.find((item) => String(item.id) === String(rawId ?? ''));
 
   const itemOptions = useMemo(
     () => items.map((item) => ({ value: String(item.id), label: item.sku ? `${item.sku} - ${item.name}` : item.name })),
@@ -199,7 +200,7 @@ const PurchaseRequestPage = () => {
       return;
     }
 
-    const selectedItem = items.find((item) => item.id === purchaseFormData.itemId);
+    const selectedItem = findItemById(purchaseFormData.itemId);
     if (!selectedItem) return;
 
     setPurchaseRequestItems((prev) => [...prev, {
@@ -232,7 +233,7 @@ const PurchaseRequestPage = () => {
     const itemsToSubmit = [...purchaseRequestItems];
 
     if (purchaseFormData.itemId) {
-      const selectedItem = items.find((item) => item.id === purchaseFormData.itemId);
+      const selectedItem = findItemById(purchaseFormData.itemId);
       if (selectedItem) {
         itemsToSubmit.push({
           id: Date.now(),
@@ -438,14 +439,14 @@ const PurchaseRequestPage = () => {
                       placeholder="Select Item"
                       value={purchaseFormData.itemId}
                       onChange={(e) => {
-                        const selected = items.find((item) => item.id === e.target.value);
+                        const selected = findItemById(e.target.value);
                         if (selected) {
                           setPurchaseFormData((prev) => ({
                             ...prev,
-                            itemId: selected.id,
+                            itemId: String(selected.id ?? ''),
                             itemSku: selected.sku,
                             itemName: selected.name,
-                            unitOfMeasurement: selected.unitOfMeasurement,
+                            unitOfMeasurement: resolveItemUnitOfMeasurement(selected),
                           }));
                         }
                       }}
@@ -456,7 +457,7 @@ const PurchaseRequestPage = () => {
                   </FieldWrapper>
 
                   <FieldWrapper label="Unit of Measurement" required className="text-sm">
-                    <Input value={purchaseFormData.unitOfMeasurement} disabled className="text-sm py-2 bg-gray-50" />
+                    <Input value={purchaseFormData.unitOfMeasurement ?? ''} disabled className="text-sm py-2 bg-gray-50" />
                   </FieldWrapper>
                 </div>
 
