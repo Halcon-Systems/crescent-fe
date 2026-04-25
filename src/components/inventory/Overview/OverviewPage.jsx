@@ -54,10 +54,14 @@ const  OverviewPage = () => {
 
     const statsPayload = dashboardStats?.data || dashboardStats || {};
     const stats = [
-        { label: 'Total Items', value: statsPayload.totalItems ?? 0, color: '#7C3AED', percentage: 78 },
-        { label: 'Low Stock Alert', value: statsPayload.lowStockItems ?? 0, color: '#FB923C', percentage: 45 },
-        { label: 'New Products', value: statsPayload.newProducts ?? 0, color: '#EF4444', percentage: 30 },
-        { label: 'Inventory Card', value: statsPayload.inventoryCards ?? 0, color: '#10B981', percentage: 60 },
+        { label: 'Items', value: Number(statsPayload.items ?? statsPayload.totalItems ?? 0) },
+        { label: 'Stores', value: Number(statsPayload.stores ?? 0) },
+        { label: 'Purchase Requests', value: Number(statsPayload.purchaseRequests ?? 0) },
+        { label: 'Purchase Orders', value: Number(statsPayload.purchaseOrders ?? 0) },
+        { label: 'GRN', value: Number(statsPayload.grn ?? 0) },
+        { label: 'Issuance', value: Number(statsPayload.issuance ?? 0) },
+        { label: 'Returns', value: Number(statsPayload.returns ?? 0) },
+        { label: 'Transfers', value: Number(statsPayload.transfers ?? 0) },
     ];
 
     const stores = normalizeApiList(storesRaw).map((store) => ({

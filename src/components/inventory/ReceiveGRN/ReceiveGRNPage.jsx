@@ -17,6 +17,7 @@ const ReceiveGRNPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [receiving, setReceiving] = useState(null);
+  const [previewApproving, setPreviewApproving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -28,7 +29,7 @@ const ReceiveGRNPage = () => {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [nextGrnNumber, setNextGrnNumber] = useState('GRN-2024-001');
   const [grnFormData, setGrnFormData] = useState({
-    poId: '',
+    purchaseOrderId: '',
     storeId: '',
     vendorId: '',
     grnType: 'PURCHASE',
@@ -55,10 +56,100 @@ const ReceiveGRNPage = () => {
   const { mutateAsync: deleteGRN } = useDeleteGRN();
   const { mutateAsync: confirmGRN } = useConfirmGRN();
 
-  const grns = normalizeApiList(grnsRaw);
-  const purchaseOrders = normalizeApiList(purchaseOrdersRaw);
-  const items = normalizeApiList(itemsRaw);
-  const vendors = normalizeApiList(vendorsRaw);
+  const normalizeOrderLines = (order) => {
+    if (!order || typeof order !== 'object') return [];
+    if (Array.isArray(order.lines)) return order.lines;
+    if (Array.isArray(order.items)) return order.items;
+    if (Array.isArray(order.purchaseOrderItems)) return order.purchaseOrderItems;
+    return [];
+  };
+
+  const items = useMemo(
+    () =>
+      normalizeApiList(itemsRaw).map((item) => ({
+        ...item,
+        id: item.id ?? item.itemId ?? item._id,
+        name: item.name || item.itemName || item.label || '',
+        sku: item.sku || item.itemSku || '',
+      })),
+    [itemsRaw]
+  );
+
+  const itemLookup = useMemo(() => {
+    const map = new Map();
+    items.forEach((item) => map.set(String(item.id), item));
+    return map;
+  }, [items]);
+
+  const purchaseOrders = useMemo(
+    () =>
+      normalizeApiList(purchaseOrdersRaw).map((order) => {
+        const lines = normalizeOrderLines(order).map((line, idx) => {
+          const rawItemId = line.itemId ?? line.id ?? line.inventoryItemId ?? '';
+          const itemMeta = itemLookup.get(String(rawItemId));
+          return {
+            ...line,
+            id: line.id ?? line.purchaseOrderLineId ?? `${order.purchaseOrderId ?? order.id ?? 'po'}-line-${idx}`,
+            itemId: rawItemId,
+            itemName: line.itemName || line.name || itemMeta?.name || `Item #${rawItemId}`,
+            sku: line.itemSku || line.sku || itemMeta?.sku || '',
+            quantityOrdered: Number(line.quantityOrdered ?? line.qty ?? line.quantity ?? 0),
+            unitPrice: Number(line.unitPrice ?? line.price ?? 0),
+          };
+        });
+        return {
+          ...order,
+          id: order.id ?? order.purchaseOrderId ?? order._id,
+          poNo: order.purchaseOrderNo || order.poNo || order.code || '',
+          prNo: order.purchaseRequestNo || order.purchasedRequestNo || order.prNo || '',
+          officeId: order.officeId ?? order.office?.id ?? order.office?.officeId ?? '',
+          officeName: order.officeName || order.office?.branchName || order.branchName || '',
+          storeId: order.storeId ?? order.store?.id ?? order.store?.storeId ?? '',
+          vendorId: order.vendorId ?? order.vendor?.id ?? order.vendor?.vendorId ?? '',
+          lines,
+        };
+      }),
+    [itemLookup, purchaseOrdersRaw]
+  );
+
+  const grns = useMemo(
+    () =>
+      normalizeApiList(grnsRaw).map((grn) => ({
+        ...grn,
+        id: grn.id ?? grn.grnId ?? grn._id,
+        grnNo: grn.grnNo || grn.grnNumber || '',
+        purchaseOrderId: grn.purchaseOrderId ?? grn.poId ?? grn.purchaseOrder?.purchaseOrderId ?? grn.po?.id ?? '',
+        poNo: grn.poNo || grn.purchaseOrder?.poNo || grn.purchaseOrder?.purchaseOrderNo || '',
+        prNo:
+          grn.prNo ||
+          grn.prNumber ||
+          grn.purchaseOrder?.purchaseRequest?.requestNo ||
+          grn.purchaseOrder?.purchaseRequestNo ||
+          '',
+        officeName: grn.officeName || grn.office?.branchName || grn.branchName || '',
+        storeId: grn.storeId ?? grn.store?.storeId ?? grn.store?.id ?? '',
+        storeName: grn.storeName || grn.store?.storeName || grn.store?.name || '',
+        vendorId: grn.vendorId ?? grn.purchaseOrder?.vendorId ?? '',
+        vendorName: grn.vendorName || grn.vendor?.vendorName || grn.vendor?.name || '',
+        receivedByUserId: grn.receivedByUserId ?? grn.receivedByUser ?? grn.receivedBy ?? null,
+        confirmedByUserId: grn.confirmedByUserId ?? null,
+        confirmedAt: grn.confirmedAt ?? null,
+        remarks: grn.remarks ?? null,
+        receivedDate: grn.receivedDate || grn.createdAt || grn.updatedAt || null,
+        items: Array.isArray(grn.lines) ? grn.lines : Array.isArray(grn.items) ? grn.items : [],
+      })),
+    [grnsRaw]
+  );
+
+  const vendors = useMemo(
+    () =>
+      normalizeApiList(vendorsRaw).map((vendor) => ({
+        ...vendor,
+        id: vendor.id ?? vendor.vendorId ?? vendor._id,
+        name: vendor.name || vendor.vendorName || vendor.label || '',
+      })),
+    [vendorsRaw]
+  );
 
   const stores = useMemo(
     () =>
@@ -76,11 +167,14 @@ const ReceiveGRNPage = () => {
 
   const filteredGrns = (Array.isArray(grns) ? grns : []).filter(grn =>
     grn.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-    grn.poId?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    String(grn.purchaseOrderId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (grn.grnNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (grn.poNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (grn.prNo || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const displayGrns = filteredGrns;
+  const displayGrns = filteredGrns.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePreview = (grn) => {
     console.log('[ReceiveGRNPage.handlePreview] Previewing GRN:', grn);
@@ -102,7 +196,7 @@ const ReceiveGRNPage = () => {
 
     setEditingGrnId(grn.id);
     setGrnFormData({
-      poId: grn.poId || '',
+      purchaseOrderId: grn.purchaseOrderId || '',
       storeId: grn.storeId || '',
       vendorId: grn.vendorId || '',
       grnType: grn.grnType || 'PURCHASE',
@@ -110,7 +204,7 @@ const ReceiveGRNPage = () => {
       quantityReceived: 1,
       conditionStatus: 'NEW'
     });
-    setGrnItems(grn.items || []);
+    setGrnItems(Array.isArray(grn.items) ? grn.items : []);
     setShowAddModal(true);
   };
 
@@ -144,6 +238,27 @@ const ReceiveGRNPage = () => {
       .then(() => toast.success('GRN confirmed successfully.'))
       .catch(() => toast.error('Failed to confirm GRN.'))
       .finally(() => setReceiving(null));
+  };
+
+  const handleApproveFromPreview = () => {
+    if (!previewGrn?.id) return;
+    setPreviewApproving(true);
+    confirmGRN(previewGrn.id)
+      .then(() => {
+        toast.success('GRN approved successfully.');
+        setPreviewGrn((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: 'CONFIRMED',
+                confirmedByUserId: prev.confirmedByUserId || prev.receivedByUserId || 'N/A',
+                confirmedAt: new Date().toISOString(),
+              }
+            : prev
+        );
+      })
+      .catch(() => toast.error('Failed to approve GRN.'))
+      .finally(() => setPreviewApproving(false));
   };
 
   const toggleRowSelection = (id) => {
@@ -196,7 +311,7 @@ const ReceiveGRNPage = () => {
     setEditingGrnId(null);
     setGrnItems([]);
     setGrnFormData({
-      poId: '',
+      purchaseOrderId: '',
       storeId: '',
       vendorId: '',
       grnType: 'PURCHASE',
@@ -209,6 +324,14 @@ const ReceiveGRNPage = () => {
   const fetchPODetails = (poId) => {
     const po = purchaseOrders.find((order) => String(order.id ?? order.purchaseOrderId) === String(poId));
     setSelectedPO(po || null);
+    if (po) {
+      setGrnFormData((prev) => ({
+        ...prev,
+        poId: String(poId),
+        storeId: po.storeId ? String(po.storeId) : prev.storeId,
+        vendorId: po.vendorId ? String(po.vendorId) : prev.vendorId,
+      }));
+    }
   };
 
   const handleGrnFormChange = (e) => {
@@ -219,7 +342,7 @@ const ReceiveGRNPage = () => {
     }));
 
     // Fetch PO details when PO is selected
-    if (name === 'poId' && value) {
+    if (name === 'purchaseOrderId' && value) {
       fetchPODetails(value);
     }
   };
@@ -236,7 +359,7 @@ const ReceiveGRNPage = () => {
 
   const handleAddItem = () => {
     // Validation order: field checks first, then business logic
-    if (!grnFormData.poId) {
+    if (!grnFormData.purchaseOrderId) {
       toast.error('Please select a purchase order first');
       return;
     }
@@ -246,58 +369,48 @@ const ReceiveGRNPage = () => {
       return;
     }
 
-    if (!grnFormData.storeId) {
-      toast.error('Please select a store');
-      return;
-    }
-
     if (!selectedPO) {
       toast.error('PO details are still loading. Please wait...');
       return;
     }
 
-    if (!selectedPO.items || selectedPO.items.length === 0) {
+    if (!selectedPO.lines || selectedPO.lines.length === 0) {
       toast.error('Selected PO has no items');
       return;
     }
 
-    const selectedItem = items.find(i => i.id === grnFormData.itemId);
+    const selectedItem = items.find(i => String(i.id) === String(grnFormData.itemId));
     if (!selectedItem) {
       toast.error('Item not found in system');
       return;
     }
 
     // Find the PO item to get quantityOrdered and unitPrice
-    const poItem = selectedPO.items.find(pi => pi.itemId === grnFormData.itemId);
+    const poItem = selectedPO.lines.find(pi => String(pi.itemId) === String(grnFormData.itemId));
     if (!poItem) {
-      console.error('[handleAddItem] PO item not found. Available items:', selectedPO.items.map(i => i.itemId));
+      console.error('[handleAddItem] PO item not found. Available items:', selectedPO.lines.map(i => i.itemId));
       toast.error('This item is not in the selected purchase order');
       return;
     }
 
-    if (!poItem.quantityOrdered || poItem.quantityOrdered === 0) {
+    if (!poItem.quantityOrdered || poItem.quantityOrdered <= 0) {
       toast.error('PO item has no quantity ordered');
-      return;
-    }
-
-    if (!poItem.unitPrice) {
-      toast.error('PO item has no unit price');
       return;
     }
 
     const newItem = {
       id: Date.now(),
-      itemId: selectedItem.id,
-      itemName: selectedItem.name,
-      sku: selectedItem.sku,
+      itemId: selectedItem.id ?? poItem.itemId,
+      itemName: selectedItem.name || poItem.itemName || poItem.name || `Item #${poItem.itemId}`,
+      sku: selectedItem.sku || poItem.sku || '',
       quantityReceived: grnFormData.quantityReceived,
       quantityOrdered: poItem.quantityOrdered,
-      unitPrice: poItem.unitPrice,
+      unitPrice: Number(poItem.unitPrice ?? 0),
       conditionStatus: grnFormData.conditionStatus,
       poItemId: poItem.id
     };
 
-    setGrnItems([...grnItems, newItem]);
+    setGrnItems((prev) => [...prev, newItem]);
     setGrnFormData(prev => ({
       ...prev,
       itemId: '',
@@ -313,23 +426,16 @@ const ReceiveGRNPage = () => {
   };
 
   const handleSubmitGRN = () => {
-    if (!grnFormData.poId || !grnFormData.storeId || !grnFormData.vendorId || grnItems.length === 0) {
-      toast.error('Please fill required fields and add at least one item.');
+    if (!grnFormData.purchaseOrderId || grnItems.length === 0) {
+      toast.error('Please select a purchase order and add at least one item.');
       return;
     }
     setSubmitting(true);
     const payload = {
-      poId: grnFormData.poId,
-      storeId: grnFormData.storeId,
-      vendorId: grnFormData.vendorId,
-      grnType: grnFormData.grnType,
-      grnNumber: nextGrnNumber,
-      items: grnItems.map((item) => ({
-        itemId: item.itemId,
-        quantityReceived: item.quantityReceived,
-        quantityOrdered: item.quantityOrdered,
-        unitPrice: item.unitPrice,
-        conditionStatus: item.conditionStatus,
+      purchaseOrderId: Number(grnFormData.purchaseOrderId),
+      lines: grnItems.map((item) => ({
+        itemId: Number(item.itemId),
+        qty: Math.max(1, Number.parseInt(item.quantityReceived, 10) || 1),
       })),
     };
     const submitPromise = editingGrnId
@@ -341,7 +447,11 @@ const ReceiveGRNPage = () => {
         toast.success(editingGrnId ? 'GRN updated.' : 'GRN created.');
         handleCloseModal();
       })
-      .catch(() => toast.error('Failed to save GRN.'))
+      .catch((error) => {
+        const msg = error?.response?.data?.message;
+        const resolved = Array.isArray(msg) ? msg.join('; ') : msg;
+        toast.error(resolved || 'Failed to save GRN.');
+      })
       .finally(() => setSubmitting(false));
   };
 
@@ -402,10 +512,10 @@ const ReceiveGRNPage = () => {
                     className="w-4 h-4 cursor-pointer"
                   />
                 </th>
-                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">Office</th>
-                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">Purchase Request No.</th>
-                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">Purchase Order No.</th>
                 <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">GRN No.</th>
+                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">PO No.</th>
+                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">PR No.</th>
+                <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">Store</th>
                 <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">GRN Type</th>
                 <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">GRN Received On</th>
                 <th className="py-3 px-4 font-semibold text-gray-700 text-sm text-left">Received By</th>
@@ -438,13 +548,13 @@ const ReceiveGRNPage = () => {
                         className="w-4 h-4 cursor-pointer"
                       />
                     </td>
-                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.store?.name || grn.storeName || grn.storeId || 'N/A'}</td>
-                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.prNumber || 'N/A'}</td>
-                    <td className="py-4 px-4 text-gray-700 text-sm font-medium">{grn.poId}</td>
-                    <td className="py-4 px-4 font-semibold text-gray-900 text-sm">{grn.grnNumber}</td>
+                    <td className="py-4 px-4 font-semibold text-gray-900 text-sm">{grn.grnNo || `GRN-${grn.id}`}</td>
+                    <td className="py-4 px-4 text-gray-700 text-sm font-medium">{grn.poNo || `PO-${grn.purchaseOrderId || 'N/A'}`}</td>
+                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.prNo || 'N/A'}</td>
+                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.storeName || `Store #${grn.storeId || 'N/A'}`}</td>
                     <td className="py-4 px-4 text-gray-700 text-sm">{grn.grnType || 'PURCHASE'}</td>
-                    <td className="py-4 px-4 text-gray-700 text-sm">{new Date(grn.receivedDate).toLocaleDateString()}</td>
-                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.receivedByUser || grn.receivedBy || 'N/A'}</td>
+                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.receivedDate ? new Date(grn.receivedDate).toLocaleDateString() : 'N/A'}</td>
+                    <td className="py-4 px-4 text-gray-700 text-sm">{grn.receivedByUserId || 'N/A'}</td>
                     <td className="py-4 px-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
                         grn.status === 'RECEIVED'
@@ -597,8 +707,8 @@ const ReceiveGRNPage = () => {
                 <div>
                   <label className="text-gray-700 font-semibold text-sm block mb-2">Purchase Order *</label>
                   <select
-                    name="poId"
-                    value={grnFormData.poId}
+                    name="purchaseOrderId"
+                    value={grnFormData.purchaseOrderId}
                     onChange={handleGrnFormChange}
                     disabled={loadingPOs || purchaseOrders.length === 0}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-blue-500 text-sm disabled:opacity-50 disabled:bg-gray-100"
@@ -607,7 +717,9 @@ const ReceiveGRNPage = () => {
                       {loadingPOs ? 'Loading POs...' : purchaseOrders.length === 0 ? 'No POs available' : 'Select PO'}
                     </option>
                     {purchaseOrders.map(po => (
-                      <option key={po.id} value={po.id}>PO #{po.id}</option>
+                      <option key={po.id} value={po.id}>
+                        {po.poNo ? `${po.poNo}` : `PO #${po.id}`}
+                      </option>
                     ))}
                   </select>
                   {loadingPOs && (
@@ -696,8 +808,10 @@ const ReceiveGRNPage = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:border-blue-500 text-sm"
                   >
                     <option value="">Select item</option>
-                    {items.map(item => (
-                      <option key={item.id} value={item.id}>{item.name} ({item.sku})</option>
+                    {(selectedPO?.lines || []).map((line) => (
+                      <option key={line.id} value={line.itemId}>
+                        {line.itemName} ({line.sku || `#${line.itemId}`})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -877,19 +991,23 @@ const ReceiveGRNPage = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs text-gray-600">GRN Number</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.grnNumber || 'N/A'}</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.grnNo || `GRN-${previewGrn.id || 'N/A'}`}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600">Purchase Order</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.poId || 'N/A'}</p>
+                      <p className="text-xs text-gray-600">PO No.</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.poNo || `PO-${previewGrn.purchaseOrderId || 'N/A'}`}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">PR No.</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.prNo || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600">Vendor</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.vendor?.name || previewGrn.vendorId || 'N/A'}</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.vendorName || previewGrn.vendor?.vendorName || previewGrn.vendor?.name || previewGrn.vendorId || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600">Office/Store</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.store?.name || previewGrn.storeId || 'N/A'}</p>
+                      <p className="text-xs text-gray-600">Store</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.storeName || previewGrn.store?.storeName || previewGrn.store?.name || previewGrn.storeId || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -899,8 +1017,8 @@ const ReceiveGRNPage = () => {
                   <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Status & Dates</h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-gray-600">GRN Type</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.grnType || 'PURCHASE'}</p>
+                      <p className="text-xs text-gray-600">GRN Status</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.status || 'DRAFT'}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600">Status</p>
@@ -926,7 +1044,17 @@ const ReceiveGRNPage = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-600">Received By</p>
-                      <p className="text-sm font-semibold text-gray-900">{previewGrn.receivedByUser || previewGrn.receivedBy || 'N/A'}</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.receivedByUserId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Confirmed By</p>
+                      <p className="text-sm font-semibold text-gray-900">{previewGrn.confirmedByUserId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600">Confirmed At</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {previewGrn.confirmedAt ? new Date(previewGrn.confirmedAt).toLocaleString() : 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -935,36 +1063,20 @@ const ReceiveGRNPage = () => {
               {/* Items Table */}
               {previewGrn.items && previewGrn.items.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Items Received</h3>
+                  <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">GRN Lines</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="bg-gray-100 border-b border-gray-300">
                           <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Item ID</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Quantity Ordered</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Quantity Received</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Unit Price</th>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Condition</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">Qty Received</th>
                         </tr>
                       </thead>
                       <tbody>
                         {previewGrn.items.map((item, index) => (
                           <tr key={index} className="border-b border-gray-200">
                             <td className="px-4 py-3 text-sm text-gray-900">{item.itemId || 'N/A'}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">{item.quantityOrdered || 0}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">{item.quantityReceived || 0}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">${(parseFloat(item.unitPrice) || 0).toFixed(2)}</td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                item.conditionStatus === 'GOOD'
-                                  ? 'bg-green-100 text-green-700'
-                                  : item.conditionStatus === 'DAMAGED'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {item.conditionStatus || 'NEW'}
-                              </span>
-                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900">{item.qtyReceived ?? item.quantityReceived ?? item.qty ?? 0}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -975,7 +1087,15 @@ const ReceiveGRNPage = () => {
             </div>
 
             {/* Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-between gap-3">
+              <button
+                onClick={handleApproveFromPreview}
+                disabled={previewApproving || previewGrn.status === 'CONFIRMED' || previewGrn.status === 'APPROVED'}
+                className="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {previewApproving && <Loader size={16} className="animate-spin" />}
+                {previewApproving ? 'Approving...' : 'Approve GRN'}
+              </button>
               <button
                 onClick={closePreviewModal}
                 className="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"

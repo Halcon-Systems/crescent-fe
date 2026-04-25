@@ -43,3 +43,12 @@ export function resolveItemRecordId(item) {
   if (id === undefined || id === null) return "";
   return String(id);
 }
+
+/** PR payloads may use `lines`, `items`, or `purchaseRequestItems`. */
+export function purchaseRequestLineList(request) {
+  if (!request || typeof request !== "object") return [];
+  if (Array.isArray(request.lines)) return request.lines;
+  if (Array.isArray(request.items)) return request.items;
+  if (Array.isArray(request.purchaseRequestItems)) return request.purchaseRequestItems;
+  return [];
+}
